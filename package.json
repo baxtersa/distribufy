@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "babel": "^6.23.0",
+    "babel-core": "^6.26.3",
+    "babel-traverse": "^6.26.0",
+    "babel-types": "^6.26.0"
+  },
+  "devDependencies": {
+    "@types/babel-core": "^6.25.4",
+    "@types/babel-types": "^7.0.2",
+    "@types/node": "^10.3.0"
+  }
+}
