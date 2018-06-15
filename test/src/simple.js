@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 let y = 1;
 
 function f(x) {
@@ -15,4 +17,4 @@ function f(x) {
   return x + y + z;
 }
 
-console.log(f(3));
+assert.equal(f(3), 11);

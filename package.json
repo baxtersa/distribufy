@@ -1,16 +1,26 @@
 {
+  "name": "jsPickle",
+  "main": "dist/src/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "./node_modules/.bin/jest"
   },
   "dependencies": {
     "babel": "^6.23.0",
     "babel-core": "^6.26.3",
     "babel-traverse": "^6.26.0",
-    "babel-types": "^6.26.0"
+    "babel-types": "^6.26.0",
+    "cryo": "^0.0.6",
+    "yargs": "^11.0.0"
   },
   "devDependencies": {
     "@types/babel-core": "^6.25.4",
     "@types/babel-types": "^7.0.2",
-    "@types/node": "^10.3.0"
+    "@types/jest": "^23.1.0",
+    "@types/node": "^10.3.0",
+    "@types/tmp": "^0.0.33",
+    "@types/yargs": "^11.0.0",
+    "jest": "^23.1.0",
+    "tmp": "^0.0.33"
   }
 }
