@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "outDir": "dist",
+        "allowUnreachableCode": true,
+        "lib": ["es2016", "dom"],
+        "target": "es6",
+        "pretty": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "declaration": true,
+        "inlineSourceMap": true,
+        "noUnusedLocals": true,
+        "baseUrl": "./",
+        "paths": {
+          "@types/babel-traverse": ["/home/samuel/stopify/node_modules/@types/babel-traverse/index"]
+        }
+    },
+    "include": [
+      "src",
+      "test"
+    ],
+    "exclude": [
+      "dist"
+    ]
+}
