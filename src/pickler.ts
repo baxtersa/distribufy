@@ -35,29 +35,31 @@ export class Pickler {
     this.id_map.set(value, this.fn_id++);
   }
 
-  private restructureObject(key: string, value: Object, o: any): any {
-    let ix = this.id_map.get(value)
-    if (ix !== undefined) {
-      o[key] = { type: index, value: ix };
-      return;
-    }
-  }
-
   private restructure(o: any): any {
-    const props = Object.getOwnPropertyNames(o);
-    for (const key of props) {
-      const value = o[key];
-      switch (typeof value) {
-        case 'function':
-          this.restructureFn(key, value, o);
-          break;
-        case 'object':
-          // Recursively restructure nested objects
-          this.restructure(value);
-          break;
-        default:
-          break;
-      }
+    switch (typeof o) {
+      case 'object':
+      case 'function':
+        // `null` has type 'object'
+        if (o === null) {
+          return;
+        }
+
+        const props = Object.getOwnPropertyNames(o);
+        for (const key of props) {
+          const value = o[key];
+          switch (typeof value) {
+            case 'function':
+              this.restructureFn(key, value, o);
+              break;
+            case 'object':
+              // Recursively restructure nested objects
+              this.restructure(value);
+              break;
+            default:
+              break;
+          }
+        }
+        break;
     }
   }
 
@@ -68,13 +70,26 @@ export class Pickler {
    * cooperation with the `Depickler` deserialization API.
    */
   serialize(o: any): Buffer {
-    // Restructures Function objects and prototypes as serializable properties on `o`.
-    this.restructure(o);
-    o[functions] = this.fns.map(({ type, value }) =>
-      ({ type, value: type === native ? value.name : value.toString() }));
+    const box: any = { box: o };
+    // Restructures Function objects and prototypes as serializable properties on `box`.
+    this.restructure(box);
+    box[functions] = this.fns.map((foo: any/*{ type, value }*/) => {
+      // Restructure function properties to serialize
+      let o: any = {};
+      for (const key of Object.getOwnPropertyNames(foo.value)) {
+        o[key] = foo.value[key];
+      }
+
+      return {
+        type: foo.type,
+        value: foo.type === native ? foo.value.name : foo.value.toString(),
+        properties: o,
+      };
+    });
+
     try {
       // Leverage v8 serialization API to preserve sharing
-      return v8.serialize(o);
+      return v8.serialize(box);
     } catch (e) {
       throw new Error(`Error: restructured object not serializable\n${e}`);
     }
@@ -91,32 +106,46 @@ export class Pickler {
  * scope before the function is reallocated from its string representation.
  */
 export class Depickler {
-  private reconstruct(o: any): any {
-    console.log(o);
-    if (o.type === user) {
-      console.log(o.value);
-      return () => (Function(`return ${o.value}`)());
-    }
+  private filterFnProperties(obj: { [key: string]: any }): string[] {
+    const properties = Object.getOwnPropertyNames(obj);
+    return properties.filter(key =>
+      !/^(arguments|caller|length|name)$/.test(key));
   }
 
-  private detraverse(o: any): any {
-    const fns = o[functions];
-    const props = Object.getOwnPropertyNames(o);
-    for (const key of props) {
-      const value = o[key];
-      switch (typeof value) {
-        case 'object':
-          if (value.type === index) {
-            o[key] = this.reconstruct(fns[value.value]);
-          } else {
-            this.detraverse(value);
-          }
-          break;
-        default:
-          break;
-      }
+  private reconstructFn(serial: any): Function {
+    const { value, properties } = serial;
+    const fn = Function(`return ${value}`)();
+    for (const key of this.filterFnProperties(properties)) {
+      fn[key] = properties[key]
     }
-    delete o[functions];
+
+    return fn;
+  }
+
+  private dispatch(o: any): any {
+
+  }
+
+  private reconstruct(o: any): any {
+    const fns = o[functions];
+    o[functions] = fns.map((serial: any) => {
+      if (serial.type === user) {
+        return this.reconstructFn(serial);
+      } else {
+        return () => {
+          throw new Error(`Deserializing native function (${serial.value}) not supported.`);
+        }
+      }
+    });
+    const data = o.box;
+    switch (typeof data) {
+      case 'object':
+        if (data.type === index) {
+          o.box = o[functions][data.value];
+        } else {
+          this.dispatch(data);
+        }
+    }
   }
 
   /**
@@ -130,7 +159,8 @@ export class Depickler {
     const o = v8.deserialize(buffer);
 
     // Traverse the raw object, reifying Function objects and class instances
-    this.detraverse(o);
-    return o;
+    this.reconstruct(o);
+    console.log(o);
+    return o.box;
   }
 };

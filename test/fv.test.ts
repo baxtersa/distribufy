@@ -17,8 +17,8 @@ async function resolve(stream: fs.WriteStream, fn: () => void): Promise<void> {
   });
 }
 
-describe("tesing programs that use call/cc", () => {
-  const files = glob.sync("test/src/*.js", {});
+describe("testing serialization process", () => {
+  const files = glob.sync("./test/src/*.js", {});
   for (const src of files) {
     test(`${src}`, async () => {
       const { name: dst } = tmp.fileSync({ dir: '.', postfix: '.js' });
@@ -29,7 +29,7 @@ describe("tesing programs that use call/cc", () => {
             [
               '-r',
               'source-map-support/register',
-              './dist/src/transform/exposeFreeVariables.js',
+              './dist/src/transform/scope.js',
               src, '>', dst
             ],
             { stdio: [ process.stdin, outStream, process.stderr ] }).status,

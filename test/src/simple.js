@@ -8,6 +8,10 @@ function f(x) {
       a2: 8
     }
   };
+  {
+    obj;
+    x;
+  }
   function g() {
     {
       return obj.a.a2;
