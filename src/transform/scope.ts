@@ -2,6 +2,12 @@ import * as babel from 'babel-core';
 import * as t from 'babel-types';
 import { NodePath, Scope } from 'babel-traverse';
 
+const known: string[] = [
+  '$__R',
+  '$__T',
+  '$__D',
+];
+
 type FV<T> = T & {
   fvs?: Set<string>;
 };
@@ -34,16 +40,20 @@ function getCatchLexicalScope(scope: Scope): Scope | undefined {
   }
 };
 
-function renameFreeReferences(path: NodePath<t.Node>): void {
+function identifyFreeReferences(path: NodePath<t.Node>): void {
   const bindings = path.scope.bindings;
 
   Object.keys(bindings).forEach(id =>
     bindings[id].referencePaths.forEach((refPath: NodePath<t.Identifier>) => {
       const refFnLexicalScope = getFunctionLexicalScope(refPath.scope)
+      if (refFnLexicalScope &&
+        refFnLexicalScope.path.isFunction() &&
+        refFnLexicalScope.path.node.id.name === id) {
+        return;
+      }
+
       if (refFnLexicalScope && refFnLexicalScope !== path.scope) {
-        const refFnNode = refFnLexicalScope.path.node as t.Function;
         propogateFV(id, refFnLexicalScope, path.scope);
-        refPath.replaceWith(accessFV(refPath, refFnNode.id));
       }
     }));
 }
@@ -51,7 +61,13 @@ function renameFreeReferences(path: NodePath<t.Node>): void {
 function propogateFV(id: string, currentScope: Scope, declaringScope: Scope): void {
   const currentScopeNode: FV<t.Node> = currentScope.path.node;
 
+  // If function identifier defines the scope return early
   if (currentScope.path.isFunction() && currentScope.path.node.id.name === id) {
+    return;
+  }
+
+  // Filter known free variables
+  if (known.includes(id)) {
     return;
   }
 
@@ -73,12 +89,12 @@ function accessFV(path: NodePath<t.Identifier>, fnId: t.Identifier): t.MemberExp
 
 const visitor = {
   Program(path: NodePath<t.Program>): void {
-    renameFreeReferences(path);
+    identifyFreeReferences(path);
   },
 
   Function: {
     enter(path: NodePath<t.Function>): void {
-      renameFreeReferences(path);
+      identifyFreeReferences(path);
     },
 
     exit(path: NodePath<FV<t.Function>>): void {
@@ -99,13 +115,14 @@ const visitor = {
       // assign free variables as properties on function's bound identifier
       const fvs = t.objectExpression(Array.from(path.node.fvs).map(id =>
         t.objectProperty(t.identifier(id), t.identifier(id), false, true)));
-      const parent = path.getStatementParent();
+      const parent = path.parent;
       let bound;
-      if (parent.isExpressionStatement() &&
-        t.isAssignmentExpression(parent.node.expression)) {
-        bound = t.memberExpression(parent.node.expression.left as t.Expression,
+      if (t.isAssignmentExpression(parent)) {
+        // parent is an assignment, assign fvs to lval
+        bound = t.memberExpression(parent.left as t.Expression,
           t.identifier('__free__'));
       } else {
+        // parent is an expression statement, assign fvs to function identifier
         bound = t.memberExpression(path.node.id, t.identifier('__free__'));
       }
       const assignFVs = t.expressionStatement(t.assignmentExpression('=', bound, fvs));

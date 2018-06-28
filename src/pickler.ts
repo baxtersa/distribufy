@@ -8,6 +8,7 @@ const native = '$__native';
 const user = '$__user';
 const index = '$__index';
 const functions = '$__functions';
+const symbols = '$__symbols';
 
 /**
  * `Pickler` wraps the v8 serialization API with methods for serializing
@@ -52,13 +53,33 @@ export class Pickler {
               this.restructureFn(key, value, o);
               break;
             case 'object':
+              if (value === global) {
+                o[key] = 'global';
+                break;
+              }
               // Recursively restructure nested objects
               this.restructure(value);
+              break;
+            case 'symbol':
+              o[key] = value.toString();
               break;
             default:
               break;
           }
         }
+
+        const syms = Object.getOwnPropertySymbols(o);
+        for (const key of syms) {
+          this.restructure(o[key]);
+          o[symbols] = o[symbols] || {};
+          o[symbols][key.toString()] = o[key];
+          delete o[key];
+        }
+        break;
+      case 'symbol':
+        o = o.toString();
+        break;
+      default:
         break;
     }
   }
@@ -79,6 +100,8 @@ export class Pickler {
       for (const key of Object.getOwnPropertyNames(foo.value)) {
         o[key] = foo.value[key];
       }
+
+      this.restructure(o);
 
       return {
         type: foo.type,
@@ -106,6 +129,9 @@ export class Pickler {
  * scope before the function is reallocated from its string representation.
  */
 export class Depickler {
+  /** Map Function objects to ids to support sharing */
+  private fn_map: Map<number, Function> = new Map();
+
   private filterFnProperties(obj: { [key: string]: any }): string[] {
     const properties = Object.getOwnPropertyNames(obj);
     return properties.filter(key =>
@@ -114,7 +140,11 @@ export class Depickler {
 
   private reconstructFn(serial: any): Function {
     const { value, properties } = serial;
-    const fn = Function(`return ${value}`)();
+    const fn = Function('require', `
+var $__T = require("stopify-continuations/dist/src/runtime/runtime");
+var $__R = $__T.newRTS("catch");
+var $__D = require("distribufy/dist/src/runtime/node").init($__R);
+return ${value}`)(require);
     for (const key of this.filterFnProperties(properties)) {
       fn[key] = properties[key]
     }
@@ -123,25 +153,45 @@ export class Depickler {
   }
 
   private dispatch(o: any): any {
+    switch (typeof o) {
+      case 'object':
+        // `null` has type 'object'
+        if (o === null) {
+          return;
+        }
 
+        const props = Object.getOwnPropertyNames(o);
+        for (const key of props) {
+          const value = o[key];
+          switch (typeof value) {
+            case 'object':
+              if (value.type === index) {
+                o[key] = this.fn_map.get(value.value);
+              } else {
+                this.dispatch(value);
+              }
+              break;
+            default:
+              break;
+          }
+        }
+        break;
+    }
   }
 
   private reconstruct(o: any): any {
-    const fns = o[functions];
-    o[functions] = fns.map((serial: any) => {
+    o[functions].forEach((serial: any, ix: number) => {
       if (serial.type === user) {
-        return this.reconstructFn(serial);
+        this.fn_map.set(ix, this.reconstructFn(serial));
       } else {
-        return () => {
-          throw new Error(`Deserializing native function (${serial.value}) not supported.`);
-        }
+        throw new Error(`Deserializing native function (${serial.value}) not supported.`);
       }
     });
     const data = o.box;
     switch (typeof data) {
       case 'object':
         if (data.type === index) {
-          o.box = o[functions][data.value];
+          o.box = this.fn_map.get(data.value);
         } else {
           this.dispatch(data);
         }
@@ -160,7 +210,6 @@ export class Depickler {
 
     // Traverse the raw object, reifying Function objects and class instances
     this.reconstruct(o);
-    console.log(o);
     return o.box;
   }
 };
