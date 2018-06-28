@@ -1,7 +1,11 @@
 import * as t from 'babel-types';
 import { NodePath, Visitor } from 'babel-traverse';
-import { plugin as callcc, transformFromAst, fastFreshId } from 'stopify-continuations';
-import { plugin as pickle } from 'jsPickle';
+import {
+  plugin as callcc,
+  transformFromAst,
+  fastFreshId,
+  flatness,
+} from 'stopify-continuations';
 
 import insertCheckpoints from './insertCheckpoints';
 
@@ -33,14 +37,14 @@ const visitor: Visitor = {
             [t.identifier('result')])));
     }
 
-//    timeSlow('insertCheckpoints', () =>
-//      transformFromAst(<any>path, [insertCheckpoints]));
+    timeSlow('flatness', () =>
+      transformFromAst(<any>path, [flatness]));
+
+    timeSlow('insertCheckpoints', () =>
+      transformFromAst(<any>path, [insertCheckpoints]));
 
     timeSlow('(control ...) elimination', () =>
       transformFromAst(<any>path, [[callcc, opts]]));
-
-//    timeSlow('pickling', () =>
-//      transformFromAst(<any>path, [pickle]));
 
     // var $__D = require('distribufy/dist/runtime/node').init($__R);;
     path.node.body.splice(opts.eval ? 3 : 2, 0,

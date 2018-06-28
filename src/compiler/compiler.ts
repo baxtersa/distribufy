@@ -24,19 +24,4 @@ export function compile(src: string, opts: CompilerOpts): string {
   babelOpts.plugins = [[pickle]];
   const { code: checkpointed } = babel.transform(code!, babelOpts);
   return checkpointed!;
-
-//  const babelOpts = {
-//    plugins: [[ distribufy, opts ]],
-//    babelrc: false,
-//    ast: true,
-//    code: false,
-//    comments: false,
-//  };
-//
-//  const { ast } = babel.transform(src, babelOpts);
-//  babelOpts.plugins = [[pickle]];
-//  babelOpts.code = true;
-//  babelOpts.ast = false;
-//  const { code } = babel.transformFromAst(ast!, undefined, babelOpts);
-//  return code!;
 }

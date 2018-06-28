@@ -23,9 +23,14 @@ function foo() {
   }
 }
 
-const a = foo().bar().baz();
+const o1 = foo();
+console.log('foo called');
+const o2 = o1.bar();
+console.log('bar called');
+const a = o2.baz();
+console.log('baz called');
 
-assert.equal(a, 1);
-assert.equal(x, 1);
-assert.equal(y, 1);
-assert.equal(z, 1);
+console.log(a, 3);
+console.log(x, 1);
+console.log(y, 1);
+console.log(z, 1);

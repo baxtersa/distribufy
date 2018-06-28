@@ -23,13 +23,11 @@ export class SerializableRuntime {
     this.onEnd = onEnd;
   }
 
-  serialize(continuation: Stack): { continuationBuffer: Buffer, runtimeBuffer: Buffer } {
+  serialize(continuation: Stack): { continuationBuffer: Buffer } {
     const continuationBuffer = this.pickle.serialize(continuation);
-    const runtimeBuffer = this.pickle.serialize(this);
     console.log('writing', continuationBuffer);
     fs.writeFileSync('continuation.data', continuationBuffer);
-    fs.writeFileSync('runtime.data', runtimeBuffer);
-    return { continuationBuffer, runtimeBuffer };
+    return { continuationBuffer };
   }
 
   checkpoint(): void {
@@ -39,10 +37,12 @@ export class SerializableRuntime {
           try {
             k();
           } catch (exn) {
-//            const { continuationBuffer } = this.serialize(exn);
+            const frame = exn.stack.shift();
+            const { continuationBuffer } = this.serialize(exn.stack);
 //            const newStack = this.depickle.deserialize(continuationBuffer);
 //            exn.stack = newStack;
-            throw exn;
+//            exn.stack.unshift(frame);
+//            throw exn;
           }
         }, onDone);
       });
