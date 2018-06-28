@@ -25,7 +25,11 @@ describe("tesing programs that use call/cc", () => {
       const outStream = fs.createWriteStream(dst);
       return await resolve(outStream, function () {
         try {
-          assert.equal(spawnSync('bin/distribufy', [src, dst, '--require-runtime'],
+          assert.equal(spawnSync('bin/distribufy', [
+            src, dst,
+            '-t', 'catch',
+            '--require-runtime',
+          ],
             { stdio: [ process.stdin, outStream, process.stderr ] }).status,
             0,
             'error during compilation');

@@ -4,12 +4,15 @@ let y = 0;
 let z = 0;
 
 function foo() {
+  while (false) {}
   x++;
   function bar() {
+    while (false) {}
     y++;
     function baz() {
+      while (false) {}
       z++;
-      return 1;
+      return x+y+z;
     }
     return {
       baz,
