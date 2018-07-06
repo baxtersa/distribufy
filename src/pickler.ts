@@ -23,17 +23,34 @@ export class Pickler {
   private fns: any[] = [];
 
   private restructureFn(key: string, value: Function, o: any): any {
+    delete o[key];
+
     // Maintain identity of serialized functions
     let ix = this.id_map.get(value)
+
     if (ix !== undefined) {
       o[key] = { type: index, value: ix };
       return;
     }
 
+    const record: any = {
+      type: isNative(value) ? native : user,
+      value,
+    };
     // Replace function with index into serialized fn array;
-    this.fns.push({ type: isNative(value) ? native : user, value });
+    this.fns.push(record);
+
     o[key] = { type: index, value: this.fn_id };
     this.id_map.set(value, this.fn_id++);
+
+    let properties: any = {};
+    for (const key of Object.getOwnPropertyNames(value)) {
+      properties[key] = (<any>value)[key];
+    }
+
+    this.restructure(properties);
+
+    record.properties = properties;
   }
 
   private restructure(o: any): any {
@@ -135,21 +152,27 @@ export class Depickler {
   private filterFnProperties(obj: { [key: string]: any }): string[] {
     const properties = Object.getOwnPropertyNames(obj);
     return properties.filter(key =>
-      !/^(arguments|caller|length|name)$/.test(key));
+      !/^(prototype|arguments|caller|length|name)$/.test(key));
   }
 
   private reconstructFn(serial: any): Function {
-    const { value, properties } = serial;
-    const fn = Function('require', `
-var $__T = require("stopify-continuations/dist/src/runtime/runtime");
-var $__R = $__T.newRTS("catch");
-var $__D = require("distribufy/dist/src/runtime/node").init($__R);
-return ${value}`)(require);
-    for (const key of this.filterFnProperties(properties)) {
-      fn[key] = properties[key]
-    }
-
+    const { value } = serial;
+    const fn = Function(`return ${value}`)();
     return fn;
+  }
+
+  private reconstructProperties(serial: any, ix: number): void {
+    const { properties } = serial;
+    const fn: any = this.fn_map.get(ix)!;
+    for (const key of this.filterFnProperties(properties)) {
+      if (fn[key] && typeof fn[key] === 'function') {
+        console.log('continuing');
+        continue;
+      }
+
+      this.dispatch(properties[key]);
+      fn[key] = properties[key];
+    }
   }
 
   private dispatch(o: any): any {
@@ -187,6 +210,14 @@ return ${value}`)(require);
         throw new Error(`Deserializing native function (${serial.value}) not supported.`);
       }
     });
+    o[functions].forEach((serial: any, ix: number) => {
+      if (serial.type === user) {
+        this.reconstructProperties(serial, ix);
+      } else {
+        throw new Error(`Deserializing native function (${serial.value}) not supported.`);
+      }
+    });
+
     const data = o.box;
     switch (typeof data) {
       case 'object':
