@@ -1,7 +1,7 @@
 import { Result, Runtime } from 'stopify-continuations/dist/src/types';
 import { Stack } from 'stopify-continuations/dist/src/runtime/abstractRuntime';
 import * as fs from 'fs';
-import { Pickler, Depickler } from 'jsPickle';
+import { Pickler } from 'jsPickle';
 
 function defaultDone(x: Result) {
   if (x.type === 'exception') {
@@ -15,7 +15,6 @@ export class SerializableRuntime {
   private onEnd: (result: any) => void;
 
   private pickle = new Pickler();
-  private depickle = new Depickler();
 
   constructor(rts: Runtime, onDone: (result: Result) => void = defaultDone,
     onEnd: (result: any) => void = defaultDone) {
@@ -25,24 +24,23 @@ export class SerializableRuntime {
 
   serialize(continuation: Stack): { continuationBuffer: Buffer } {
     const continuationBuffer = this.pickle.serialize(continuation);
-    console.log('writing', continuationBuffer);
     fs.writeFileSync('continuation.data', continuationBuffer);
     return { continuationBuffer };
   }
 
   checkpoint(): void {
+    if (!this.rts.mode) {
+      return this.rts.stack[0].f();
+    }
+
     return this.rts.captureCC(k => {
       return this.rts.endTurn((onDone) => {
         return this.rts.runtime(() => {
           try {
             k();
           } catch (exn) {
-            const frame = exn.stack.shift();
-            const { continuationBuffer } = this.serialize(exn.stack);
-//            const newStack = this.depickle.deserialize(continuationBuffer);
-//            exn.stack = newStack;
-//            exn.stack.unshift(frame);
-//            throw exn;
+            exn.stack.shift();
+            this.serialize(exn.stack);
           }
         }, onDone);
       });

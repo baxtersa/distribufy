@@ -45,18 +45,6 @@ const visitor: Visitor = {
 
     timeSlow('(control ...) elimination', () =>
       transformFromAst(<any>path, [[callcc, opts]]));
-
-    // var $__D = require('distribufy/dist/runtime/node').init($__R);;
-    path.node.body.splice(opts.eval ? 3 : 2, 0,
-      t.variableDeclaration('var',
-        [t.variableDeclarator(
-          t.identifier('$__D'),
-          t.callExpression(
-            t.memberExpression(
-              t.callExpression(t.identifier('require'),
-                [t.stringLiteral('distribufy/dist/src/runtime/node')]),
-              t.identifier('init')),
-            [t.identifier('$__R')]))]));
   },
 };
 
