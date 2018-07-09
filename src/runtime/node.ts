@@ -2,6 +2,7 @@
  * Runtime system for Node
  */
 import { Runtime } from 'stopify-continuations';
+import { InterruptEstimator } from 'stopify-estimators';
 import { SerializableRuntime } from './serializable';
 
 let continuationsRTS: Runtime | undefined;
@@ -15,7 +16,8 @@ export function init(rts: Runtime) {
   continuationsRTS.remainingStack = Infinity;
   continuationsRTS.restoreFrames = Infinity;
 
-  const serializableRTS = new SerializableRuntime(continuationsRTS);
+  const estimator = new InterruptEstimator(5000);
+  const serializableRTS = new SerializableRuntime(continuationsRTS, estimator);
 
   return serializableRTS;
 }

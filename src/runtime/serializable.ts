@@ -1,22 +1,28 @@
-import { Result, Runtime } from 'stopify-continuations/dist/src/types';
-import { Stack } from 'stopify-continuations/dist/src/runtime/abstractRuntime';
+import { Result, Runtime, Stack } from 'stopify-continuations';
+import { ElapsedTimeEstimator } from 'stopify-estimators';
 import * as fs from 'fs';
 import { Pickler } from 'jsPickle';
 
-function defaultDone(x: Result) {
-  if (x.type === 'exception') {
-    throw x.value;
-  }
-}
-
 export class SerializableRuntime {
+  public onDone: (result: Result) => void;
+  public onEnd: (result: any) => void;
+
   private pickle = new Pickler();
 
   constructor(private rts: Runtime,
-    public onDone: (result: Result) => void = defaultDone,
-    public onEnd: (result: any) => void = defaultDone) {
+    private estimator: ElapsedTimeEstimator) {
+    function defaultDone(x: Result) {
+      if (x.type === 'exception') {
+        throw x.value;
+      }
+    }
+
     this.rts = rts;
-    this.onEnd = onEnd;
+    this.onDone = defaultDone;
+    this.onEnd = (result) => {
+      defaultDone(result);
+      this.estimator.cancel();
+    };
   }
 
   serialize(continuation: Stack): { continuationBuffer: Buffer } {
@@ -28,6 +34,10 @@ export class SerializableRuntime {
   checkpoint(): void {
     if (!this.rts.mode) {
       return this.rts.stack[0].f();
+    }
+
+    if (this.estimator.elapsedTime() === 0) {
+      return;
     }
 
     return this.rts.captureCC(k => {
