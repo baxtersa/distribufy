@@ -10,14 +10,11 @@ function defaultDone(x: Result) {
 }
 
 export class SerializableRuntime {
-  private rts: Runtime;
-//  private onDone: (result: Result) => void;
-  private onEnd: (result: any) => void;
-
   private pickle = new Pickler();
 
-  constructor(rts: Runtime, onDone: (result: Result) => void = defaultDone,
-    onEnd: (result: any) => void = defaultDone) {
+  constructor(private rts: Runtime,
+    public onDone: (result: Result) => void = defaultDone,
+    public onEnd: (result: any) => void = defaultDone) {
     this.rts = rts;
     this.onEnd = onEnd;
   }

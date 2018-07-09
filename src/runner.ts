@@ -44,6 +44,7 @@ if (args.continuation) {
   const buf = fs.readFileSync(args.continuation);
   const stack = depickle.deserialize(buf);
   stack[stack.length - 1].f = main;
+  stack[stack.length - 1].this = this;
   $__R.runtime(() => {
     throw new $__T.Capture((k) => {
       try {
@@ -56,12 +57,13 @@ if (args.continuation) {
       }
     }, stack);
   }, (result) => {
-    console.log(result);
+    if (result.type === 'exception') {
+      throw result.value;
+    }
     $__D.onEnd(result);
   });
 } else {
   $__R.runtime(() => main(), (result) => {
-    console.log(result);
     $__D.onEnd(result);
   });
 }
