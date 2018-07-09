@@ -235,7 +235,7 @@ export class Depickler {
    * Supports deserialization of Function objects and class instances in
    * cooperation with the `Pickler` Serialization API.
    */
-  deserialize(buffer: Buffer): Object {
+  deserialize(buffer: Buffer): any {
     // Deserialize into a raw object using the v8 API
     const o = v8.deserialize(buffer);
 
