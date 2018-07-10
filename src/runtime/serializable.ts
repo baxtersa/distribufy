@@ -20,8 +20,8 @@ export class SerializableRuntime {
     this.rts = rts;
     this.onDone = defaultDone;
     this.onEnd = (result) => {
-      defaultDone(result);
       this.estimator.cancel();
+      defaultDone(result);
     };
   }
 
