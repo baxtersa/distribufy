@@ -8,4 +8,8 @@ function f() {
   return g() + 1;
 }
 
-assert.equal(f(), 8);
+function main() {
+  assert.equal(f(), 8);
+}
+
+module.exports = main

@@ -1,29 +1,29 @@
 const assert = require('assert');
 
 function main() {
-let x = 0;
-let y = 0;
-let z = 0;
+  let x = 0;
+  let y = 0;
+  let z = 0;
 
-function foo() {
-  while (false) {}
-  x++;
-  function bar() {
+  function foo() {
     while (false) {}
-    y++;
-    function baz() {
+    x++;
+    function bar() {
       while (false) {}
-      z++;
-      return x+y+z;
+      y++;
+      function baz() {
+        while (false) {}
+        z++;
+        return x+y+z;
+      }
+      return {
+        baz,
+      }
     }
     return {
-      baz,
+      bar,
     }
   }
-  return {
-    bar,
-  }
-}
 
   const o1 = foo();
   console.log('foo called');
@@ -33,10 +33,10 @@ function foo() {
   console.log('baz called');
   foo();
 
-  console.log(a, 3);
-  console.log(x, 2);
-  console.log(y, 1);
-  console.log(z, 1);
+  assert.equal(a, 3);
+  assert.equal(x, 2);
+  assert.equal(y, 1);
+  assert.equal(z, 1);
 }
 
-module.exports= main;
+module.exports = main;

@@ -18,7 +18,7 @@ async function resolve(stream: fs.WriteStream, fn: () => void): Promise<void> {
 }
 
 describe("tesing programs that use call/cc", () => {
-  const files = glob.sync("/home/samuel/stopify/stopify/test/should-run/*.js", {});
+  const files = glob.sync("test/src/*.js", {});
   for (const src of files) {
     test(`${src}`, async () => {
       const { name: dst } = tmp.fileSync({ dir: '.', postfix: '.js' });
@@ -33,7 +33,7 @@ describe("tesing programs that use call/cc", () => {
             { stdio: [ process.stdin, outStream, process.stderr ] }).status,
             0,
             'error during compilation');
-          assert(spawnSync('node', [ dst ], { stdio: 'inherit' }).status === 0,
+          assert(spawnSync('bin/run-dist', [ dst ], { stdio: 'inherit' }).status === 0,
             'error while running');
         } finally {
           fs.unlinkSync(dst);
