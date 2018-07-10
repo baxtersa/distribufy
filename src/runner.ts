@@ -2,6 +2,7 @@ import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Depickler } from 'jsPickle';
+import { Serialized } from './runtime/serializable';
 
 const depickle = new Depickler();
 
@@ -17,6 +18,58 @@ function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);
 }
 
+function parseArgs(args: string[]): yargs.Arguments {
+  return parser.parse(args);
+}
+
+function runFromContinuation(args: yargs.Arguments): void {
+  const buf = fs.readFileSync(args.continuation);
+  const stack = depickle.deserialize(buf);
+
+  function restoreTopLevel() {
+    delete require.cache[args.filename];
+    stack[stack.length - 1].f = require(args.filename);
+    stack[stack.length - 1].this = this;
+  }
+
+  restoreTopLevel();
+
+  $__R.runtime(() => {
+    throw new $__T.Capture((k) => {
+      try {
+        k()
+      } catch (e) {
+        if (e instanceof $__T.Restore) {
+          (<any>e.stack[0]).this = $__D;
+        }
+        throw e;
+      }
+    }, stack);
+  }, (result) => {
+    if (result.type === 'exception' &&
+      result.value instanceof Serialized &&
+      args.loop) {
+      run({ ...args, continuation: relativize('continuation.data') });
+    } else {
+      $__D.onEnd(result);
+    }
+  });
+}
+
+function run(args: yargs.Arguments) {
+  if (args.continuation) {
+    runFromContinuation(args);
+  } else if (args.loop) {
+    $__R.runtime(() => require(args.filename)(), (result) => {
+      run({ ...args, continuation: relativize('continuation.data') });
+    });
+  } else {
+    $__R.runtime(() => require(args.filename)(), (result) => {
+      $__D.onEnd(result);
+    });
+  }
+}
+
 const parser = yargs.usage('Usage: $0 <filename> [options]')
   .strict()
   .command('$0 <filename>', 'Run the program with checkpointing', (yargs) =>
@@ -30,40 +83,13 @@ const parser = yargs.usage('Usage: $0 <filename> [options]')
         describe: 'Resume execution with the serialized continuation',
         type: 'string',
         coerce: (opt => relativize(opt)),
+      },
+      'l': {
+        alias: 'loop',
+        describe: 'Run program to completion, resuming after each serialized suspension',
       }
     }))
     .help()
 
-function parseArgs(args: string[]): yargs.Arguments {
-  return parser.parse(args);
-}
-
 const args = parseArgs(process.argv.slice(2));
-const main = require(args.filename);
-if (args.continuation) {
-  const buf = fs.readFileSync(args.continuation);
-  const stack = depickle.deserialize(buf);
-  stack[stack.length - 1].f = main;
-  stack[stack.length - 1].this = this;
-  $__R.runtime(() => {
-    throw new $__T.Capture((k) => {
-      try {
-        k()
-      } catch (e) {
-        if (e instanceof $__T.Restore) {
-          (<any>e.stack[0]).this = $__D;
-        }
-        throw e;
-      }
-    }, stack);
-  }, (result) => {
-    if (result.type === 'exception') {
-      throw result.value;
-    }
-    $__D.onEnd(result);
-  });
-} else {
-  $__R.runtime(() => main(), (result) => {
-    $__D.onEnd(result);
-  });
-}
+run(args);

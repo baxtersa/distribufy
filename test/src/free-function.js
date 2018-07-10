@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 function g() {
+  while (false) {}
   return 7;
 }
 

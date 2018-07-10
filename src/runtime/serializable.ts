@@ -3,6 +3,10 @@ import { ElapsedTimeEstimator } from 'stopify-estimators';
 import * as fs from 'fs';
 import { Pickler } from 'jsPickle';
 
+export class Serialized {
+  constructor(public continuation: string) {}
+}
+
 export class SerializableRuntime {
   public onDone: (result: Result) => void;
   public onEnd: (result: any) => void;
@@ -12,7 +16,9 @@ export class SerializableRuntime {
   constructor(private rts: Runtime,
     private estimator: ElapsedTimeEstimator) {
     function defaultDone(x: Result) {
-      if (x.type === 'exception') {
+      if (x.type === 'exception' && x.value instanceof Serialized) {
+        return;
+      } else if (x.type === 'exception') {
         throw x.value;
       }
     }
@@ -44,6 +50,8 @@ export class SerializableRuntime {
           } catch (exn) {
             exn.stack.shift();
             this.serialize(exn.stack);
+
+            throw new Serialized('continuation.data');
           }
         }, onDone);
       });
