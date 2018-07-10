@@ -32,10 +32,6 @@ export class SerializableRuntime {
   }
 
   checkpoint(): void {
-    if (!this.rts.mode) {
-      return this.rts.stack[0].f();
-    }
-
     if (this.estimator.elapsedTime() === 0) {
       return;
     }
