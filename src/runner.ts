@@ -24,7 +24,8 @@ function parseArgs(args: string[]): yargs.Arguments {
 
 function runFromContinuation(args: yargs.Arguments): void {
   const buf = fs.readFileSync(args.continuation);
-  const stack = depickle.deserialize(buf);
+  const { continuation: stack, persist } = depickle.deserialize(buf);
+  $__D.persistent_map = persist;
 
   function restoreTopLevel() {
     delete require.cache[args.filename];

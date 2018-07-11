@@ -11,6 +11,8 @@ export class SerializableRuntime {
   public onDone: (result: Result) => void;
   public onEnd: (result: any) => void;
 
+  public persistent_map = new Map<string, any>();
+
   private pickle = new Pickler();
 
   constructor(private rts: Runtime,
@@ -31,8 +33,21 @@ export class SerializableRuntime {
     };
   }
 
+  persist<T>(id: string, e: () => T): T {
+    let v = this.persistent_map.get(id);
+    if (v === undefined) {
+      v = e();
+      this.persistent_map.set(id, v);
+    }
+    return v;
+  }
+
   serialize(continuation: Stack): { continuationBuffer: Buffer } {
-    const continuationBuffer = this.pickle.serialize(continuation);
+    const o = {
+      continuation,
+      persist: this.persistent_map,
+    };
+    const continuationBuffer = this.pickle.serialize(o);
     fs.writeFileSync('continuation.data', continuationBuffer);
     return { continuationBuffer };
   }
