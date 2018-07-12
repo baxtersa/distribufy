@@ -5,7 +5,7 @@ function apply(f, args) {
 }
 
 function main() {
-  assert.equal(apply(inc, [7]));
+  assert.equal(apply(inc, [7]), 8);
 
   function inc(x) {
     return x + 1;
