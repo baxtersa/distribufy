@@ -9,6 +9,7 @@ const user = '$__user';
 const index = '$__index';
 const functions = '$__functions';
 const symbols = '$__symbols';
+const globals = '$__globals';
 
 /**
  * `Pickler` wraps the v8 serialization API with methods for serializing
@@ -21,6 +22,17 @@ export class Pickler {
   private fn_id = 0;
   /** Reified fn objects that get assigned to object for serialization */
   private fns: any[] = [];
+
+  private restructureProperties(key: string, value: any): any {
+    let properties: any = {};
+    for (const key of Object.getOwnPropertyNames(value)) {
+      properties[key] = (<any>value)[key];
+    }
+
+    this.restructure(properties);
+
+    return properties;
+  }
 
   private restructureFn(key: string, value: Function, o: any): any {
     delete o[key];
@@ -43,14 +55,7 @@ export class Pickler {
     o[key] = { type: index, value: this.fn_id };
     this.id_map.set(value, this.fn_id++);
 
-    let properties: any = {};
-    for (const key of Object.getOwnPropertyNames(value)) {
-      properties[key] = (<any>value)[key];
-    }
-
-    this.restructure(properties);
-
-    record.properties = properties;
+    record.properties = this.restructureProperties(key, value);
   }
 
   private restructure(o: any): any {
@@ -71,30 +76,17 @@ export class Pickler {
               break;
             case 'object':
               if (value === global) {
-                o[key] = 'global';
-                break;
+                o[key] = { type: globals };
+                continue;
               }
               // Recursively restructure nested objects
               this.restructure(value);
-              break;
-            case 'symbol':
-              o[key] = value.toString();
               break;
             default:
               break;
           }
         }
 
-        const syms = Object.getOwnPropertySymbols(o);
-        for (const key of syms) {
-          this.restructure(o[key]);
-          o[symbols] = o[symbols] || {};
-          o[symbols][key.toString()] = o[key];
-          delete o[key];
-        }
-        break;
-      case 'symbol':
-        o = o.toString();
         break;
       default:
         break;
@@ -181,6 +173,8 @@ export class Depickler {
         // `null` has type 'object'
         if (o === null) {
           return;
+        } else if (o === global) {
+          return;
         }
 
         const props = Object.getOwnPropertyNames(o);
@@ -188,8 +182,11 @@ export class Depickler {
           const value = o[key];
           switch (typeof value) {
             case 'object':
-              if (value.type === index) {
+              if (value && value.type === index) {
                 o[key] = this.fn_map.get(value.value);
+              } else if (value && value.type === globals) {
+                o[key] = global;
+                continue;
               } else {
                 this.dispatch(value);
               }
@@ -223,6 +220,8 @@ export class Depickler {
       case 'object':
         if (data.type === index) {
           o.box = this.fn_map.get(data.value);
+        } else if (data.type === globals) {
+          o.box = global;
         } else {
           this.dispatch(data);
         }
