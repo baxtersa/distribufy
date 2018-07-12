@@ -1,3 +1,4 @@
+import { native as nativeSym } from './symbol_map';
 const v8 = require('v8');
 
 function isNative(f: Function): boolean {
@@ -114,7 +115,10 @@ export class Pickler {
 
       return {
         type: foo.type,
-        value: foo.type === native ? foo.value.name : foo.value.toString(),
+        value: foo.type === native ? {
+          type: symbols,
+          value: Symbol.keyFor(foo.value[nativeSym]),
+        } : foo.value.toString(),
         properties: o,
       };
     });
@@ -204,14 +208,14 @@ export class Depickler {
       if (serial.type === user) {
         this.fn_map.set(ix, this.reconstructFn(serial));
       } else {
-        throw new Error(`Deserializing native function (${serial.value}) not supported.`);
+        this.fn_map.set(ix, eval(serial.value.value))
       }
     });
     o[functions].forEach((serial: any, ix: number) => {
       if (serial.type === user) {
         this.reconstructProperties(serial, ix);
       } else {
-        throw new Error(`Deserializing native function (${serial.value}) not supported.`);
+        this.fn_map.set(ix, eval(serial.value.value))
       }
     });
 
