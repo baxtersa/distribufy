@@ -104,22 +104,14 @@ export class Pickler {
     const box: any = { box: o };
     // Restructures Function objects and prototypes as serializable properties on `box`.
     this.restructure(box);
-    box[functions] = this.fns.map((foo: any/*{ type, value }*/) => {
-      // Restructure function properties to serialize
-      let o: any = {};
-      for (const key of Object.getOwnPropertyNames(foo.value)) {
-        o[key] = foo.value[key];
-      }
-
-      this.restructure(o);
-
+    box[functions] = this.fns.map(foo => {
       return {
         type: foo.type,
         value: foo.type === native ? {
           type: symbols,
           value: Symbol.keyFor(foo.value[nativeSym]),
         } : foo.value.toString(),
-        properties: o,
+        properties: foo.properties,
       };
     });
 
