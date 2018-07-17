@@ -2,17 +2,16 @@ import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Depickler } from 'jsPickle';
-import { Serialized } from './runtime/serializable';
+import { Serialized, SerializableRuntime } from './runtime/serializable';
 
 const depickle = new Depickler();
 
 import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';
 const $__R = $__T.newRTS('catch');
 import * as runtime from './runtime/node';
-const $__D = runtime.init($__R);
 (<any>global).$__T = $__T;
 (<any>global).$__R = $__R;
-(<any>global).$__D = $__D;
+let $__D: SerializableRuntime;
 
 function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);
@@ -25,17 +24,22 @@ function parseArgs(args: string[]): yargs.Arguments {
 function runFromContinuation(args: yargs.Arguments): void {
   const buf = fs.readFileSync(args.continuation);
   const { continuation: stack, persist } = depickle.deserialize(buf);
-  $__D.persistent_map = persist;
 
   function restoreTopLevel() {
     delete require.cache[args.filename];
     stack[stack.length - 1].f = require(args.filename);
-    stack[stack.length - 1].this = this;
+    stack[stack.length - 1].this = global;
   }
 
   restoreTopLevel();
 
   $__R.runtime(() => {
+    if (!$__D) {
+      $__D = runtime.init($__R);
+      (<any>global).$__D = $__D;
+    }
+    $__D.persistent_map = persist;
+
     throw new $__T.Capture((k) => {
       try {
         k()
@@ -57,15 +61,23 @@ function runFromContinuation(args: yargs.Arguments): void {
   });
 }
 
+function runFromStart() {
+  if (!$__D) {
+    $__D = runtime.init($__R);
+    (<any>global).$__D = $__D;
+  }
+  return require(args.filename).call(global);
+}
+
 function run(args: yargs.Arguments) {
   if (args.continuation) {
     runFromContinuation(args);
   } else if (args.loop) {
-    $__R.runtime(() => require(args.filename)(), (result) => {
+    $__R.runtime(runFromStart, (result) => {
       run({ ...args, continuation: relativize('continuation.data') });
     });
   } else {
-    $__R.runtime(() => require(args.filename)(), (result) => {
+    $__R.runtime(runFromStart, (result) => {
       $__D.onEnd(result);
     });
   }
