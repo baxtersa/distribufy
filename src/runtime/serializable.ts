@@ -61,6 +61,7 @@ export class SerializableRuntime {
       return this.rts.endTurn((onDone) => {
         return this.rts.runtime(() => {
           try {
+            this.estimator.reset();
             k();
           } catch (exn) {
             exn.stack.shift();
