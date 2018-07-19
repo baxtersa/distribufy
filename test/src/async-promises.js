@@ -20,11 +20,12 @@ async function g() {
 }
 
 async function j() {
+  console.log('starting');
   let v = await Promise.resolve(42)
   assert.equal(v, 42);
-  console.log('starting');
-  $__D.sleep(1000);
   console.log('sleep 1');
+  $__D.sleep(1000);
+  console.log('sleep 2');
   $__D.sleep(1000);
   console.log('done waiting...');
   f();
@@ -39,7 +40,11 @@ async function j() {
   console.log('done');
 }
 
-$__R.promise(j());
+function main() {
+  $__D.promise(j());
 
-assert.equal(i, 0);
-console.log('end');
+  assert.equal(i, 0);
+  console.log('end');
+}
+
+module.exports = main;
