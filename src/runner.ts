@@ -45,7 +45,7 @@ function runFromContinuation(args: yargs.Arguments): void {
         k()
       } catch (e) {
         if (e instanceof $__T.Restore) {
-          (<any>e.stack[0]).this = $__D;
+          e.stack[0].this = $__D;
         }
         throw e;
       }
