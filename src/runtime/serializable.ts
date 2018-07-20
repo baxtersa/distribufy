@@ -34,7 +34,7 @@ export class SerializableRuntime {
   constructor(public rts: Runtime,
     private estimator: ElapsedTimeEstimator) {
     function defaultDone(x: Result) {
-      if (x.type === 'exception' && x.value instanceof Serialized) {
+      if (x.type === 'normal' && x.value instanceof Serialized) {
         return;
       } else if (x.type === 'exception') {
         throw x.value;
@@ -73,21 +73,22 @@ export class SerializableRuntime {
   }
 
   checkpoint(): void {
-    if (this.estimator.elapsedTime() === 0) {
-      return;
-    }
+//    return;
+//    if (this.estimator.elapsedTime() === 0) {
+//      return;
+//    }
 
     return this.rts.captureCC(k => {
       return this.rts.endTurn((onDone) => {
         return this.rts.runtime(() => {
           try {
             this.estimator.reset();
-            k();
+            return k();
           } catch (exn) {
             exn.stack.shift();
             this.serialize(exn.stack);
 
-            throw new Serialized('continuation.data');
+            return new Serialized('continuation.data');
           }
         }, onDone);
       });

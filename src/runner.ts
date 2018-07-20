@@ -51,7 +51,7 @@ function runFromContinuation(args: yargs.Arguments): void {
       }
     }, stack);
   }, (result) => {
-    if (result.type === 'exception' &&
+    if (result.type === 'normal' &&
       result.value instanceof Serialized &&
       args.loop) {
       run({ ...args, continuation: relativize('continuation.data') });
