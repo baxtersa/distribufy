@@ -11,6 +11,9 @@ const index = '$__index';
 const functions = '$__functions';
 const symbols = '$__symbols';
 const globals = '$__globals';
+const cached = '$__cached';
+
+const cache = Symbol.for('cache');
 
 /**
  * `Pickler` wraps the v8 serialization API with methods for serializing
@@ -68,11 +71,22 @@ export class Pickler {
           return;
         }
 
+        if (o instanceof Promise) {
+          console.log('Promise');
+          return;
+        }
+
         const props = Object.getOwnPropertyNames(o);
         for (const key of props) {
           const value = o[key];
           switch (typeof value) {
             case 'function':
+              if (value[cache]) {
+                const cacheWrapper = { type: cached, value: value[cache] };
+                this.restructureFn('value', value[cache], cacheWrapper);
+                o[key] = cacheWrapper;
+                break;
+              }
               this.restructureFn(key, value, o);
               break;
             case 'object':
@@ -145,7 +159,7 @@ export class Depickler {
 
   private reconstructFn(serial: any): Function {
     const { value } = serial;
-    const fn = Function(`return ${value}`)();
+    const fn = Function('require', `return ${value}`)(require);
     return fn;
   }
 
@@ -178,11 +192,13 @@ export class Depickler {
           const value = o[key];
           switch (typeof value) {
             case 'object':
-              if (value && value.type === index) {
+              if (value && value.type === cached) {
+                this.dispatch(value);
+                o[key] = value.value();
+              } else if (value && value.type === index) {
                 o[key] = this.fn_map.get(value.value);
               } else if (value && value.type === globals) {
                 o[key] = global;
-                continue;
               } else {
                 this.dispatch(value);
               }
