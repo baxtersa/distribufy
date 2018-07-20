@@ -1,8 +1,10 @@
 const assert = require('assert');
 
 function box(a) {
+  $__D.checkpoint();
 
   function close() {
+    $__D.checkpoint();
     return ++a;
   }
 

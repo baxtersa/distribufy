@@ -6,13 +6,13 @@ function main() {
   let z = 0;
 
   function foo() {
-    while (false) {}
+    $__D.checkpoint();
     x++;
     function bar() {
-      while (false) {}
+      $__D.checkpoint();
       y++;
       function baz() {
-        while (false) {}
+        $__D.checkpoint();
         z++;
         return x+y+z;
       }

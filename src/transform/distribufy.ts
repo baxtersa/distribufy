@@ -7,8 +7,6 @@ import {
   flatness,
 } from 'stopify-continuations';
 
-import insertCheckpoints from './insertCheckpoints';
-
 function timeSlow<T>(label: string, thunk: () => T): T {
   const start = Date.now();
   const result = thunk();
@@ -39,9 +37,6 @@ const visitor: Visitor = {
 
     timeSlow('flatness', () =>
       transformFromAst(<any>path, [flatness]));
-
-    timeSlow('insertCheckpoints', () =>
-      transformFromAst(<any>path, [insertCheckpoints]));
 
     timeSlow('(control ...) elimination', () =>
       transformFromAst(<any>path, [[callcc, opts]]));

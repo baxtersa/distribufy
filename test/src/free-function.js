@@ -1,11 +1,12 @@
 const assert = require('assert');
 
 function g() {
-  while (false) {}
+  $__D.checkpoint();
   return 7;
 }
 
 function f() {
+  $__D.checkpoint();
   return g() + 1;
 }
 

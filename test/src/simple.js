@@ -4,12 +4,14 @@ function main() {
   let y = 1;
 
   function f(x) {
+    $__D.checkpoint();
     let obj = {
       a: {
         a2: 8
       }
     };
     function g() {
+      $__D.checkpoint();
       {
         return obj.a.a2;
       }

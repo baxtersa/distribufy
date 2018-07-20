@@ -8,11 +8,11 @@ function h() {
 }
 
 function f() {
-  while (false) {}
+  $__D.checkpoint();
 }
 
 async function g() {
-  while (false) {}
+  $__D.checkpoint();
   await Promise.resolve((f(), 1));
   console.log('sleeping within g');
   $__D.sleep(1000);
@@ -21,6 +21,7 @@ async function g() {
 
 async function j() {
   console.log('starting');
+  $__D.checkpoint();
   let v = await Promise.resolve(42)
   assert.equal(v, 42);
   console.log('sleep 1');
