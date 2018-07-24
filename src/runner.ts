@@ -4,8 +4,6 @@ import * as fs from 'fs';
 import { Depickler } from 'jsPickle';
 import { Serialized, SerializableRuntime } from './runtime/serializable';
 
-const depickle = new Depickler();
-
 import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';
 const $__R = $__T.newRTS('catch');
 import * as runtime from './runtime/node';
@@ -23,22 +21,27 @@ function parseArgs(args: string[]): yargs.Arguments {
 
 function runFromContinuation(args: yargs.Arguments): void {
   const buf = fs.readFileSync(args.continuation);
-  const { continuation: stack, persist } = depickle.deserialize(buf);
-
-  function restoreTopLevel() {
-    delete require.cache[args.filename];
-    stack[stack.length - 1].f = require(args.filename);
-    stack[stack.length - 1].this = global;
-  }
-
-  restoreTopLevel();
 
   $__R.runtime(() => {
     if (!$__D) {
-      $__D = runtime.init($__R);
+      $__D = runtime.init($__R, buf);
       (<any>global).$__D = $__D;
+      const main = require(args.filename);
+      if ($__D.rts.stack[$__D.rts.stack.length - 1].f.name === main.name) {
+        $__D.rts.stack[$__D.rts.stack.length - 1].f = main;
+      }
+    } else if (buf) {
+      const depickle = new Depickler();
+
+      const { continuation, persist } = depickle.deserialize(buf);
+      $__D.persistent_map = persist;
+      $__D.rts.stack = continuation;
+      delete require.cache[args.filename];
+      const main = require(args.filename);
+      if ($__D.rts.stack[$__D.rts.stack.length - 1].f.name === main.name) {
+        $__D.rts.stack[$__D.rts.stack.length - 1].f = main;
+      }
     }
-    $__D.persistent_map = persist;
 
     throw new $__T.Capture((k) => {
       try {
@@ -49,7 +52,7 @@ function runFromContinuation(args: yargs.Arguments): void {
         }
         throw e;
       }
-    }, stack);
+    }, $__D.rts.stack);
   }, (result) => {
     if (result.type === 'normal' &&
       result.value instanceof Serialized &&

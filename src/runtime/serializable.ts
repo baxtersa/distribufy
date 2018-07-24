@@ -3,7 +3,6 @@ import { Result, Runtime, Stack } from 'stopify-continuations';
 import { ElapsedTimeEstimator } from 'stopify-estimators';
 import * as fs from 'fs';
 import { Pickler } from 'jsPickle';
-import { polyfillPromises } from '../promises';
 
 export class Serialized {
   constructor(public continuation: string) {}
@@ -30,9 +29,9 @@ export class SerializableRuntime {
   public persistent_map = new Map<string, any>();
 
   private pickle = new Pickler();
+  private estimator: ElapsedTimeEstimator;
 
-  constructor(public rts: Runtime,
-    private estimator: ElapsedTimeEstimator) {
+  constructor(public rts: Runtime) {
     function defaultDone(x: Result) {
       if (x.type === 'normal' && x.value instanceof Serialized) {
         return;
@@ -49,8 +48,10 @@ export class SerializableRuntime {
       defaultDone(result);
       this.processQueuedEvents();
     };
+  }
 
-    polyfillPromises(this);
+  setEstimator(estimator: ElapsedTimeEstimator): void {
+    this.estimator = estimator;
   }
 
   persist<T>(id: string, e: () => T): T {
