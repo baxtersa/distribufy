@@ -45,7 +45,7 @@ function runFromContinuation(args: yargs.Arguments): void {
 
     throw new $__T.Capture((k) => {
       try {
-        k()
+        k(args.parameter)
       } catch (e) {
         if (e instanceof $__T.Restore) {
           e.stack[0].this = $__D;
@@ -103,6 +103,10 @@ const parser = yargs.usage('Usage: $0 <filename> [options]')
       'l': {
         alias: 'loop',
         describe: 'Run program to completion, resuming after each serialized suspension',
+      },
+      'p': {
+        alias: 'parameter',
+        describe: 'Parameter with which to resume suspended program',
       }
     }))
     .help()
