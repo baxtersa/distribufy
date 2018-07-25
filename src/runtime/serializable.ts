@@ -19,6 +19,19 @@ interface EventHandler {
   receiver: (x: Result) => void;
 }
 
+export type PromiseStatus = 'pending' | 'fulfilled' | 'rejected';
+export type PromiseHandler<T1,T2> = {
+  onFulfilled: (v: any) => T1 | PromiseLike<T1>,
+  onRejected: (e: any) => T2 | PromiseLike<T2>,
+};
+
+export interface ReifiedPromise<T> {
+  status: PromiseStatus;
+  value?: T;
+  handlers: PromiseHandler<any,any>[];
+  resolvesTo?: Promise<any>;
+};
+
 export class SerializableRuntime {
   private eventMode = EventProcessingMode.Running;
   private eventQueue: EventHandler[] = [];
@@ -30,6 +43,8 @@ export class SerializableRuntime {
 
   private pickle = new Pickler();
   private estimator: ElapsedTimeEstimator;
+
+  public promises = new Map<Promise<any>, ReifiedPromise<any>>();
 
   constructor(public rts: Runtime) {
     function defaultDone(x: Result) {
@@ -67,6 +82,7 @@ export class SerializableRuntime {
     const o = {
       continuation,
       persist: this.persistent_map,
+      promises: this.promises,
     };
     const continuationBuffer = this.pickle.serialize(o);
     fs.writeFileSync('continuation.data', continuationBuffer);

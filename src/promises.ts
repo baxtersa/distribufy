@@ -1,17 +1,35 @@
 import { Serialized, SerializableRuntime } from './runtime/serializable';
 import { Capture } from 'stopify-continuations/dist/src/runtime/runtime';
 
-const handlers = Symbol.for('handlers');
-
 export function polyfillPromises(rts: SerializableRuntime): void {
+  const originalResolve = Promise.resolve;
+  (<any>Promise.resolve) = function <T>(v: T | PromiseLike<T>): Promise<T> {
+    // Reify resolved value as queued promise in runtime.
+    const p = originalResolve.call(this, v);
+    rts.promises.set(p, {
+      status: 'fulfilled',
+      value: v,
+      handlers: [],
+    });
+    return p;
+  }
 
   const originalThen = Promise.prototype.then;
   Promise.prototype.then =
     function <T1, T2>(onFulfilled: (v: any) => T1 | PromiseLike<T1>,
       onRejected: (e: any) => T2 | PromiseLike<T2>): Promise<T1 | T2> {
       // Reify handlers queued on Promise object for serialization
-      this[handlers] = this[handlers] || [];
-      this[handlers].push({ onFulfilled, onRejected });
+      let reifiedPromise: any = rts.promises.get(this);
+      if (!reifiedPromise) {
+        reifiedPromise = {
+          status: 'pending',
+          value: undefined,
+          handlers: [{ onFulfilled, onRejected }],
+        };
+        rts.promises.set(this, reifiedPromise)
+        //throw new Error(`Promise not registered with runtime`);
+      }
+      reifiedPromise.handlers.push({ onFulfilled, onRejected });
 
       const wrapFulfill = (v: any) => {
         // A Promise chain has already been suspended. Early-exit chained
@@ -20,12 +38,16 @@ export function polyfillPromises(rts: SerializableRuntime): void {
           return v;
         }
 
-        console.log('thenning', v);
         // Wrap `onFulfilled` callback in runtime trampoline to handle
         // suspending inside Promise callbacks.
         return rts.rts.runtime(() => onFulfilled(v), (result) => {
+        if (result.value instanceof Serialized) {
+          return result.value;
+        }
           // Release resolved handler
-          this[handlers].unshift();
+          reifiedPromise.handlers.unshift();
+          reifiedPromise.status = 'fulfilled';
+          reifiedPromise.value = result.value;
           return result.value;
         });
       }
@@ -45,12 +67,16 @@ export function polyfillPromises(rts: SerializableRuntime): void {
                 // If the resumption completes successfully, fulfill the
                 // promise.
                 const r = wrapFulfill(v.value);
-                this[handlers].unshift();
+                reifiedPromise.handlers.unshift();
+                reifiedPromise.status = 'fulfilled';
+                reifiedPromise.value = v.value;
                 return r;
               } else {
                 // If the resumption fails, reject the promise.
                 const r = onRejected(v.value);
-                this[handlers].unshift();
+                reifiedPromise.handlers.unshift();
+                reifiedPromise.status = 'rejected';
+                reifiedPromise.value = v.value;
                 return r;
               }
             });
@@ -58,18 +84,27 @@ export function polyfillPromises(rts: SerializableRuntime): void {
           // A user exception was thrown, so forward to the `onRejected`
           // function if it exists.
           const r = onRejected(e);
-          this[handlers].unshift();
+          reifiedPromise.handlers.unshift();
+          reifiedPromise.status = 'rejected';
+          reifiedPromise.value = r;
           return r;
         } else {
           // An unhandled user expception was thrown, propogate the throw.
+          reifiedPromise.handlers.unshift();
+          reifiedPromise.status = 'rejected';
+          reifiedPromise.value = e;
           throw e;
         }
       }
 
       // Invoke the original `then` callback with wrapped handlers.
       const thenned = originalThen.call(this, wrapFulfill, wrapReject);
+      rts.promises.set(thenned, {
+        status: 'pending',
+        handlers: [],
+      });
       // Reify the happens-before relation of the Promise chain.
-      this.resolvesTo = thenned;
+      reifiedPromise.resolvesTo = thenned;
       return thenned;
     };
 }
