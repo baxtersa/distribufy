@@ -2,8 +2,8 @@ const assert = require('assert');
 
 function main() {
   let x = 0;
-  let y = 0;
-  let z = 0;
+  let y = 1;
+  let z = 2;
 
   function foo() {
     $__D.checkpoint();
@@ -33,10 +33,10 @@ function main() {
   console.log('baz called');
   foo();
 
-  assert.equal(a, 3);
+  assert.equal(a, 6);
   assert.equal(x, 2);
-  assert.equal(y, 1);
-  assert.equal(z, 1);
+  assert.equal(y, 2);
+  assert.equal(z, 3);
 }
 
 module.exports = main;
