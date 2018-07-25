@@ -1,17 +1,16 @@
 const assert = require('assert');
 
-function main() {
-  function suspend(v) {
-    $__D.checkpoint();
-    console.log(i++);
-    $__D.checkpoint();
-    return ++v;
-  }
-  let i = 0;
+function suspend(v) {
+  $__D.checkpoint();
+  console.log(i++);
+  $__D.checkpoint();
+  return ++v;
+}
+let i = $__D.persist('i', () => 0);
 
-  return new Promise((resolve, reject) => {
-    resolve(42);
-  }).then(suspend)
+function main() {
+  return Promise.resolve(42)
+    .then(suspend)
     .then(suspend)
     .then(suspend)
     .then(suspend)
