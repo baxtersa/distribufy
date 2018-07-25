@@ -7,11 +7,10 @@ synchronous programming model for asynchronous I/O on the serverless
 [OpenWhisk](https://openwhisk.apache.org) platform.
 
 Distribufy exposes a function `$__D.checkpoint` to JavaScript programs, which
-captures and serializes a programs continuation. Checkpoints provide the
+captures and serializes a program's continuation. Checkpoints provide the
 basis for more complex compositions of I/O driven programs.
 
 ## Building
----
 
 Distribufy builds against a branch of Stopify which must be built from
 source. The following steps should get your environment up and running.
@@ -46,7 +45,6 @@ $ yarn build
 ```
 
 ## Usage
----
 
 Distribufy consists of a command-line compiler and command-line launcher.
 
@@ -109,7 +107,6 @@ $ bin/run-dist <program> --loop
 ```
 
 ## Assumptions
----
 
 There are some limitations on the types of programs currently supported by Distribufy. These are listed and discussed briefly.
 
@@ -127,7 +124,6 @@ developed or tested.
 APIs are not currently supported.
 
 ## Examples
----
 
 ### Simple Checkpointing
 
