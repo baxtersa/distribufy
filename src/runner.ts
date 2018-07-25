@@ -1,7 +1,7 @@
 import * as yargs from 'yargs';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Depickler } from 'jsPickle';
+import { Depickler } from './serialization/pickler';
 import { Serialized, SerializableRuntime } from './runtime/serializable';
 
 import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';

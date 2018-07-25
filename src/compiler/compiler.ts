@@ -1,7 +1,7 @@
 import * as babel from 'babel-core';
 import { CompilerOpts } from 'stopify-continuations';
 import { plugin as distribufy } from '../transform/distribufy';
-import { plugin as pickle } from 'jsPickle';
+import { default as pickle } from '../serialization/transform/scope';
 
 /**
  * Compiles (i.e., "distribufies") a program. This function should not be used

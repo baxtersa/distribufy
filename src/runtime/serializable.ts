@@ -2,7 +2,7 @@ import { Capture, Restore, EndTurn } from 'stopify-continuations/dist/src/runtim
 import { Result, Runtime, Stack } from 'stopify-continuations';
 import { ElapsedTimeEstimator } from 'stopify-estimators';
 import * as fs from 'fs';
-import { Pickler } from 'jsPickle';
+import { Pickler } from '../serialization/pickler';
 
 export class Serialized {
   constructor(public continuation: string) {}

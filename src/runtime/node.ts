@@ -3,7 +3,7 @@
  */
 import { Runtime } from 'stopify-continuations';
 import { InterruptEstimator } from 'stopify-estimators';
-import { Depickler } from 'jsPickle';
+import { Depickler } from '../serialization/pickler';
 import { SerializableRuntime } from './serializable';
 import { polyfillPromises } from '../promises';
 
