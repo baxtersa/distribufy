@@ -1,8 +1,14 @@
-import * as yargs from 'yargs';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { Depickler } from './serialization/pickler';
 import { Serialized, SerializableRuntime } from './runtime/serializable';
+
+export interface RuntimeOptions {
+  filename: string;
+  continuation: string | Buffer;
+  loop: boolean;
+  parameter: any;
+}
 
 import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';
 const $__R = $__T.newRTS('catch');
@@ -11,15 +17,11 @@ import * as runtime from './runtime/node';
 (<any>global).$__R = $__R;
 let $__D: SerializableRuntime;
 
-function relativize(p: string): string {
+export function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);
 }
 
-function parseArgs(args: string[]): yargs.Arguments {
-  return parser.parse(args);
-}
-
-function runFromContinuation(args: yargs.Arguments): void {
+function runFromContinuation(args: RuntimeOptions): void {
   const buf = fs.readFileSync(args.continuation);
 
   $__R.runtime(() => {
@@ -64,7 +66,7 @@ function runFromContinuation(args: yargs.Arguments): void {
   });
 }
 
-function runFromStart() {
+function runFromStart(args: RuntimeOptions) {
   if (!$__D) {
     $__D = runtime.init($__R);
     (<any>global).$__D = $__D;
@@ -72,44 +74,16 @@ function runFromStart() {
   return require(args.filename).call(global);
 }
 
-function run(args: yargs.Arguments) {
+export function run(args: RuntimeOptions) {
   if (args.continuation) {
     runFromContinuation(args);
   } else if (args.loop) {
-    $__R.runtime(runFromStart, (result) => {
+    $__R.runtime(() => runFromStart(args), (result) => {
       run({ ...args, continuation: relativize('continuation.data') });
     });
   } else {
-    $__R.runtime(runFromStart, (result) => {
+    $__R.runtime(() => runFromStart(args), (result) => {
       $__D.onEnd(result);
     });
   }
 }
-
-const parser = yargs.usage('Usage: $0 <filename> [options]')
-  .strict()
-  .command('$0 <filename>', 'Run the program with checkpointing', (yargs) =>
-    yargs.positional('filename', {
-      describe: 'Path to the source program to run',
-      type: 'string',
-      coerce: (opt => relativize(opt)),
-    }).option({
-      'c': {
-        alias: 'continuation',
-        describe: 'Resume execution with the serialized continuation',
-        type: 'string',
-        coerce: (opt => relativize(opt)),
-      },
-      'l': {
-        alias: 'loop',
-        describe: 'Run program to completion, resuming after each serialized suspension',
-      },
-      'p': {
-        alias: 'parameter',
-        describe: 'Parameter with which to resume suspended program',
-      }
-    }))
-    .help()
-
-const args = parseArgs(process.argv.slice(2));
-run(args);
