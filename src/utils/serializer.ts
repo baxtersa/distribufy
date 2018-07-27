@@ -1,10 +1,11 @@
 import * as fs from 'fs';
 import { Stack } from 'stopify-continuations';
 import { ReifiedPromise } from '../runtime/checkpointable';
-import { Pickler } from '../serialization/pickler';
+import { Pickler, Depickler } from '../serialization/pickler';
 
 export class Serializer {
   private pickle = new Pickler();
+  private depickle = new Depickler();
 
   /**
    * Maps identifiers to values to be persisted for initialization code re-run
@@ -39,5 +40,11 @@ export class Serializer {
     const continuationBuffer = this.pickle.serialize(o);
     fs.writeFileSync('continuation.data', continuationBuffer);
     return continuationBuffer;
+  }
+
+  deserialize(buffer: Buffer): Stack {
+      const { continuation, persist } = this.depickle.deserialize(buffer);
+      this.persistent_map = persist;
+      return continuation as Stack;
   }
 }

@@ -1,12 +1,10 @@
 import * as path from 'path';
-import { Depickler } from './serialization/pickler';
-import { Checkpoint, CheckpointRuntime } from './runtime/checkpointable';
+import { CheckpointRuntime } from './runtime/checkpointable';
 import { polyfillPromises, unpolyfillPromises } from './promises';
 
 export interface RuntimeOptions {
   filename: string;
   continuation?: string | Buffer;
-  loop?: boolean;
   parameter?: any;
 }
 
@@ -26,26 +24,12 @@ function runFromContinuation(args: RuntimeOptions): any {
 
   return $__R.runtime(() => {
     if (!$__D) {
-      $__D = runtime.init($__R, buf);
+      $__D = runtime.init($__R);
       (<any>global).$__D = $__D;
-      const main = require(args.filename);
-      if ($__D.rts.stack[$__D.rts.stack.length - 1].f.name === main.name) {
-        $__D.rts.stack[$__D.rts.stack.length - 1].f = main;
-      }
-    } else if (buf) {
-      const depickle = new Depickler();
-
-      const { continuation, persist } = depickle.deserialize(buf);
-      $__D.persistent_map = persist;
-      $__D.rts.stack = continuation;
-      for (const mod in require.cache) {
-        delete require.cache[mod];
-      }
-      const main = require(args.filename);
-      if ($__D.rts.stack[$__D.rts.stack.length - 1].f.name === main.name) {
-        $__D.rts.stack[$__D.rts.stack.length - 1].f = main;
-      }
+      polyfillPromises($__D);
     }
+
+    $__D.resume(buf, () => require(args.filename));
 
     throw new $__T.Capture((k) => {
       try {
@@ -57,32 +41,22 @@ function runFromContinuation(args: RuntimeOptions): any {
         throw e;
       }
     }, $__D.rts.stack);
-  }, result => {
-    if (result.type === 'normal' &&
-      result.value instanceof Checkpoint &&
-      args.loop) {
-      return run({ ...args, continuation: result.value.value });
-    } else {
-      return $__D.onEnd(result);
-    }
-  });
+  }, result => $__D.onEnd(result));
 }
 
 function runFromStart(args: RuntimeOptions): any {
   if (!$__D) {
     $__D = runtime.init($__R);
     (<any>global).$__D = $__D;
+    polyfillPromises($__D);
   }
-  polyfillPromises($__D);
+
   return require(args.filename).call(global);
 }
 
 export function run(args: RuntimeOptions): any {
   if (args.continuation) {
     return runFromContinuation(args);
-  } else if (args.loop) {
-    return $__R.runtime(() => runFromStart(args),
-      result => run({ ...args, continuation: result.value.value }));
   } else {
     return $__R.runtime(() => runFromStart(args),
       result => {
