@@ -1,4 +1,7 @@
+import * as fs from 'fs';
 import * as yargs from 'yargs';
+import 'source-map-support/register';
+
 import { RuntimeOptions, relativize, run } from './runner';
 
 const parser = yargs.usage('Usage: $0 <filename> [options]')
@@ -13,7 +16,7 @@ const parser = yargs.usage('Usage: $0 <filename> [options]')
         alias: 'continuation',
         describe: 'Resume execution with the serialized continuation',
         type: 'string',
-        coerce: (opt => relativize(opt)),
+        coerce: (opt => fs.readFileSync(relativize(opt))),
       },
       'l': {
         alias: 'loop',

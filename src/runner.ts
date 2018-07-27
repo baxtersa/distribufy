@@ -38,7 +38,9 @@ function runFromContinuation(args: RuntimeOptions): any {
       const { continuation, persist } = depickle.deserialize(buf);
       $__D.persistent_map = persist;
       $__D.rts.stack = continuation;
-      delete require.cache[args.filename];
+      for (const mod in require.cache) {
+        delete require.cache[mod];
+      }
       const main = require(args.filename);
       if ($__D.rts.stack[$__D.rts.stack.length - 1].f.name === main.name) {
         $__D.rts.stack[$__D.rts.stack.length - 1].f = main;
@@ -59,7 +61,7 @@ function runFromContinuation(args: RuntimeOptions): any {
     if (result.type === 'normal' &&
       result.value instanceof Checkpoint &&
       args.loop) {
-      return run({ ...args, continuation: relativize('continuation.data') });
+      return run({ ...args, continuation: result.value.value });
     } else {
       return $__D.onEnd(result);
     }
@@ -80,7 +82,7 @@ export function run(args: RuntimeOptions): any {
     return runFromContinuation(args);
   } else if (args.loop) {
     return $__R.runtime(() => runFromStart(args),
-      result => run({ ...args, continuation: relativize('continuation.data') }));
+      result => run({ ...args, continuation: result.value.value }));
   } else {
     return $__R.runtime(() => runFromStart(args),
       result => {
