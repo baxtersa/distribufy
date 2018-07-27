@@ -1,13 +1,13 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import { Depickler } from './serialization/pickler';
-import { Serialized, SerializableRuntime } from './runtime/serializable';
+import { Checkpoint, SerializableRuntime } from './runtime/serializable';
+import { polyfillPromises, unpolyfillPromises } from './promises';
 
 export interface RuntimeOptions {
   filename: string;
-  continuation: string | Buffer;
-  loop: boolean;
-  parameter: any;
+  continuation?: string | Buffer;
+  loop?: boolean;
+  parameter?: any;
 }
 
 import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';
@@ -21,10 +21,10 @@ export function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);
 }
 
-function runFromContinuation(args: RuntimeOptions): void {
-  const buf = fs.readFileSync(args.continuation);
+function runFromContinuation(args: RuntimeOptions): any {
+  const buf = new Buffer(args.continuation as string, 'base64');
 
-  $__R.runtime(() => {
+  return $__R.runtime(() => {
     if (!$__D) {
       $__D = runtime.init($__R, buf);
       (<any>global).$__D = $__D;
@@ -47,7 +47,7 @@ function runFromContinuation(args: RuntimeOptions): void {
 
     throw new $__T.Capture((k) => {
       try {
-        k(args.parameter)
+        return k(args.parameter)
       } catch (e) {
         if (e instanceof $__T.Restore) {
           e.stack[0].this = $__D;
@@ -55,35 +55,38 @@ function runFromContinuation(args: RuntimeOptions): void {
         throw e;
       }
     }, $__D.rts.stack);
-  }, (result) => {
+  }, result => {
     if (result.type === 'normal' &&
-      result.value instanceof Serialized &&
+      result.value instanceof Checkpoint &&
       args.loop) {
-      run({ ...args, continuation: relativize('continuation.data') });
+      return run({ ...args, continuation: relativize('continuation.data') });
     } else {
-      $__D.onEnd(result);
+      return $__D.onEnd(result);
     }
   });
 }
 
-function runFromStart(args: RuntimeOptions) {
+function runFromStart(args: RuntimeOptions): any {
   if (!$__D) {
     $__D = runtime.init($__R);
     (<any>global).$__D = $__D;
   }
+  polyfillPromises($__D);
   return require(args.filename).call(global);
 }
 
-export function run(args: RuntimeOptions) {
+export function run(args: RuntimeOptions): any {
   if (args.continuation) {
-    runFromContinuation(args);
+    return runFromContinuation(args);
   } else if (args.loop) {
-    $__R.runtime(() => runFromStart(args), (result) => {
-      run({ ...args, continuation: relativize('continuation.data') });
-    });
+    return $__R.runtime(() => runFromStart(args),
+      result => run({ ...args, continuation: relativize('continuation.data') }));
   } else {
-    $__R.runtime(() => runFromStart(args), (result) => {
-      $__D.onEnd(result);
-    });
+    return $__R.runtime(() => runFromStart(args),
+      result => {
+        const final = $__D.onEnd(result);
+        unpolyfillPromises();
+        return final;
+      });
   }
 }
