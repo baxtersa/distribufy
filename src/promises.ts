@@ -1,8 +1,20 @@
 import { Serialized, SerializableRuntime } from './runtime/serializable';
 import { Capture } from 'stopify-continuations/dist/src/runtime/runtime';
 
+const originalResolve = Promise.resolve;
+const originalThen = Promise.prototype.then;
+
+export function unpolyfillPromises(): void {
+  Promise.prototype.then = function (onFulfilled, onRejected) {
+    return originalThen.call(this, onFulfilled, onRejected);
+  };
+
+  (<any>Promise.resolve) = function <T>(v: T | PromiseLike<T>): Promise<T> {
+    return originalResolve.call(this, v);
+  };
+}
+
 export function polyfillPromises(rts: SerializableRuntime): void {
-  const originalResolve = Promise.resolve;
   (<any>Promise.resolve) = function <T>(v: T | PromiseLike<T>): Promise<T> {
     // Reify resolved value as queued promise in runtime.
     const p = originalResolve.call(this, v);
@@ -14,7 +26,6 @@ export function polyfillPromises(rts: SerializableRuntime): void {
     return p;
   }
 
-  const originalThen = Promise.prototype.then;
   Promise.prototype.then =
     function <T1, T2>(onFulfilled: (v: any) => T1 | PromiseLike<T1>,
       onRejected: (e: any) => T2 | PromiseLike<T2>): Promise<T1 | T2> {
