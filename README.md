@@ -22,27 +22,15 @@ $ cd stopify
 $ yarn install && yarn build
 ```
 
-- Next, link the local Stopify packages.
-```bash
-$ cd <stopify-root>/stopify-continuations
-$ yarn link
-$ cd <stopify-root>/stopify-estimators
-$ yarn link
-```
-
-- Now clone Distribufy and link against the local Stopify packages from the
-previous step.
+- Now clone Distribufy alongside the local Stopify repository and build
+Distribufy.
 ```bash
 $ git clone https://github.com/baxtersa/distribufy.git
-$ cd distribufy
-$ yarn link stopify-continuations stopify-estimators
-```
-
-- And finally you should be able to build Distribufy.
-```bash
 $ cd <distribufy-root>
 $ yarn build
 ```
+
+**Note:** The repositories must be cloned next to eachother in the filesystem.
 
 ## Usage
 
@@ -67,6 +55,40 @@ These command line flags require brief explanation.
  - `-t catch` tells the compiler which instrumentation method to use to
  capture continuations. This strategy has shown the best performance on some
  benchmarks.
+
+### Cloud Deployment
+
+Compiled programs can be deployed and run on OpenWhisk. This currently
+requires building cloud functions in-tree and structuring the deployed `.zip`
+action a certain way. The following commands show how to compile, deploy, and
+invoke checkpointing functions.
+
+First, compile the source program into `<distribufy-root>/dist/`.
+```bash
+$ cd <distribufy-root>
+$ bin/distribufy <src> dist/<dst> --func -t catch
+```
+
+Next, create the `.zip` archive to be deployed.
+```bash
+$ # Define the entrypoint of the cloud function in `package.json`.
+$ mkdir tmp && echo '{ "main": "./dist/src/cloud.js" }' > tmp/package.json
+$ zip -r <action>.zip node_modules dist
+$ zip -j <action>.zip tmp/package.json
+```
+
+Now, deploy the function to openwhisk with the annotation `--annotation
+conductor true`.
+```bash
+$ wsk action create <action> <action>.zip --kind nodejs:8 --annotation conductor true
+```
+
+Finally, the action can be invoked normally. The program takes an additional
+input parameter `$filename`, which should be set to the filename of the
+compiled program.
+```bash
+$ wsk action invoke <action> -p '$filename' <dst> --result
+```
 
 ### `bin/run-dist`
 
@@ -95,12 +117,13 @@ program's execution from that position.
 $ bin/run-dist <program> --continuation <continuation-file>
 ```
 
-Again, if the program reaches a checkpoint, a continuation will be serialized to the
-file `continuation.data` on disk.
+Again, if the program reaches a checkpoint, a continuation will be serialized
+to the file `continuation.data` on disk.
 
 #### Running end-to-end
 
-If you want to run a program end-to-end, resuming each checkpoint automatically, you can run the following command.
+If you want to run a program end-to-end, resuming each checkpoint
+automatically, you can run the following command.
 
 ```bash
 $ bin/run-dist <program> --loop
@@ -201,6 +224,57 @@ function main() {
   assert.equal(x, 2);
   assert.equal(y, 2);
   assert.equal(z, 3);
+}
+
+module.exports = main;
+```
+
+### Checkpointing I/O
+
+The `checkpoint.js` program demonstrates checkpointing at an I/O boundary
+before making an asynchronous request, and restoring with the I/O result from
+the serialized checkpoint. This assumes the `http.js` function has been
+deployed in the same namespace.
+
+`http.js` - makes a HTTP request and returns the response body.
+
+```js
+const needle = require('needle');
+
+function main(params) {
+  const { method, uri } = params;
+
+  return needle(method, uri, { json: true })
+    .then(response => response.body);
+}
+```
+
+`checkpoint.js` - creates local state, checkpoints and invokes 'http.js', and
+returns a combination of the restored local state and HTTP response.
+
+```js
+function main() {
+  const options = {
+    method: 'GET',
+    uri: 'api.open-notify.org/iss-now.json',
+  };
+
+/**
+ * response: {
+ *   iss_position: {
+ *     latitude: string,
+ *     longitude: string,
+ *   },
+ *   message: string,
+ *   timestamp: number,
+ * }
+ */
+  const response = $__D.invoke('http', options);
+
+  return {
+    input: options,
+    output: response,
+  };
 }
 
 module.exports = main;
