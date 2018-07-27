@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { Depickler } from './serialization/pickler';
-import { Checkpoint, SerializableRuntime } from './runtime/serializable';
+import { Checkpoint, CheckpointRuntime } from './runtime/checkpointable';
 import { polyfillPromises, unpolyfillPromises } from './promises';
 
 export interface RuntimeOptions {
@@ -15,7 +15,7 @@ const $__R = $__T.newRTS('catch');
 import * as runtime from './runtime/node';
 (<any>global).$__T = $__T;
 (<any>global).$__R = $__R;
-let $__D: SerializableRuntime;
+let $__D: CheckpointRuntime;
 
 export function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);

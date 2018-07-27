@@ -1,7 +1,7 @@
-import { SerializableRuntime } from '../runtime/serializable';
+import { CheckpointRuntime } from '../runtime/checkpointable';
 const needle = require('needle');
 
-declare const $__D: SerializableRuntime & { http: any };
+declare const $__D: CheckpointRuntime & { http: any };
 
 function request(method: string, uri: string, options: any) {
   return $__D.checkpoint(k =>

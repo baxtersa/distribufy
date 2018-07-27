@@ -1,4 +1,4 @@
-import { Checkpoint, SerializableRuntime } from './runtime/serializable';
+import { Checkpoint, CheckpointRuntime } from './runtime/checkpointable';
 import { Capture } from 'stopify-continuations/dist/src/runtime/runtime';
 
 const originalResolve = Promise.resolve;
@@ -14,7 +14,7 @@ export function unpolyfillPromises(): void {
   };
 }
 
-export function polyfillPromises(rts: SerializableRuntime): void {
+export function polyfillPromises(rts: CheckpointRuntime): void {
   (<any>Promise.resolve) = function <T>(v: T | PromiseLike<T>): Promise<T> {
     // Reify resolved value as queued promise in runtime.
     const p = originalResolve.call(this, v);
