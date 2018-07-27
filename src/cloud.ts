@@ -6,6 +6,20 @@ interface Params {
   $param?: any;
 };
 
+interface HasState {
+  state: any;
+};
+
+function restoreFilename<T extends HasState>(filename: string, result: T | Promise<T>): T | Promise<T> {
+  if (result instanceof Promise) {
+    return result.then(r => restoreFilename(filename, r));
+  } else if (result.state) {
+    result.state.$filename = filename;
+  }
+
+  return result;
+}
+
 export function main(params: Params): any {
   const continuation = params.$continuation;
   const filename = params.$filename;
@@ -15,9 +29,5 @@ export function main(params: Params): any {
   const parameter = params;
 
   const result = run({ filename: `../${filename}`, continuation, parameter })
-  if (result.state) {
-    result.state.$filename = filename;
-  }
-
-  return result;
+  return restoreFilename(filename, result);
 }

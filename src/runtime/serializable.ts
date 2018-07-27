@@ -3,7 +3,6 @@ import { Result, Runtime, Stack } from 'stopify-continuations';
 import { ElapsedTimeEstimator } from 'stopify-estimators';
 import * as fs from 'fs';
 import { Pickler } from '../serialization/pickler';
-const needle = require('needle');
 
 /**
  * Wrapped value returned from checkpoint handlers.
@@ -141,36 +140,6 @@ export class SerializableRuntime {
   invoke(action: string, params: any): any {
     return this.checkpoint($continuation =>
       ({ action, params, state: { $continuation: $continuation } }));
-  }
-
-  http(uri: string) {
-    // Capture the continuation at the http callsite.
-    return this.rts.captureCC(k =>
-      this.rts.endTurn(onDone =>
-        this.rts.runtime(() => {
-          try {
-            return k()
-          } catch (exn) {
-            // Intercept the continuation restoration to serialize it to disk.
-            const frame = exn.stack.shift();
-            this.serialize(exn.stack);
-            exn.stack.unshift(frame);
-
-            // This is where we have to implement the continuation service
-            // integration. We should delegate to sherpa to perform the http
-            // request, passing the serialized continuation along with other
-            // arguments. Sherpa should resume the serialized continuation,
-            // passing the result of the http request as an additional
-            // parameter, which gets injected into the continuation after
-            // deserialization.
-
-            // Invoke http request
-            return needle('get', uri, { json: true })
-              .then((response: any) =>
-                this.rts.runtime(() =>
-                  k(response), onDone));
-          }
-        }, () => {})));
   }
 
   resume(): void {

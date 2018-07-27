@@ -6,18 +6,14 @@ import { InterruptEstimator } from 'stopify-estimators';
 import { Depickler } from '../serialization/pickler';
 import { SerializableRuntime } from './serializable';
 
-let continuationsRTS: Runtime | undefined;
-
-export function init(rts: Runtime, buf?: Buffer) {
-  continuationsRTS = rts;
-
+export function init(rts: Runtime, buf?: Buffer): SerializableRuntime {
   // This is not ideal. These opts should be passed to the runtime when
   // it is constructed.
-  continuationsRTS.stackSize = Infinity;
-  continuationsRTS.remainingStack = Infinity;
-  continuationsRTS.restoreFrames = Infinity;
+  rts.stackSize = Infinity;
+  rts.remainingStack = Infinity;
+  rts.restoreFrames = Infinity;
 
-  const serializableRTS = new SerializableRuntime(continuationsRTS);
+  const serializableRTS = new SerializableRuntime(rts);
 
   if (buf) {
     const depickle = new Depickler();
