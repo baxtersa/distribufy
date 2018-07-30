@@ -6,7 +6,7 @@ continuations. Distribufy levarages serializable continuations to build a
 synchronous programming model for asynchronous I/O on the serverless
 [OpenWhisk](https://openwhisk.apache.org) platform.
 
-Distribufy exposes a function `$__D.checkpoint` to JavaScript programs, which
+Distribufy exposes a `checkpoint` function to JavaScript programs, which
 captures and serializes a program's continuation. Checkpoints provide the
 basis for more complex compositions of I/O driven programs.
 
@@ -154,9 +154,11 @@ This program prints a line before and after a checkpoint, demonstrating that
 sequential code is properly checkpointed and not re-executed upon resumption.
 
 ```js
+const runtime = require('./src/index');
+
 function main() {
   console.log('before checkpoint');
-  $__D.checkpoint();
+  runtime.checkpoint();
   console.log('after checkpoint');
 }
 
@@ -166,14 +168,16 @@ module.exports = main;
 ### Nondeterministic Top-level Declarations
 
 Nondeterministic top-level program statements can be persisted
-across checkpoints. Without calling `$__D.persist`, each log would print a
+across checkpoints. Without calling `persist`, each log would print a
 unique timestamp.
 
 ```js
-let timestamp = $__D.persist('i', () => Date.now());
+const runtime = require('./src/index');
+
+let timestamp = runtime.persist('i', () => Date.now());
 
 function checkpointThenTimestamp() {
-  $__D.checkpoint();
+  runtime.checkpoint();
   return timestamp;
 }
 
@@ -192,6 +196,7 @@ This program demonstrates support for checkpointing within nested closures
 which mutate captured state. The top-level `require('assert')` is also closed over by the function `main`.
 
 ```js
+const runtime = require('./src/index');
 const assert = require('assert');
 
 function main() {
@@ -200,13 +205,13 @@ function main() {
   let z = 2;
 
   function foo() {
-    $__D.checkpoint();
+    runtime.checkpoint();
     x++;
     function bar() {
-      $__D.checkpoint();
+      runtime.checkpoint();
       y++;
       function baz() {
-        $__D.checkpoint();
+        runtime.checkpoint();
         z++;
         return x+y+z;
       }
@@ -253,6 +258,8 @@ function main(params) {
 returns a combination of the restored local state and HTTP response.
 
 ```js
+const runtime = require('./src/index');
+
 function main() {
   const options = {
     method: 'GET',
@@ -269,7 +276,7 @@ function main() {
  *   timestamp: number,
  * }
  */
-  const response = $__D.invoke('http', options);
+  const response = runtime.invoke('http', options);
 
   return {
     input: options,
