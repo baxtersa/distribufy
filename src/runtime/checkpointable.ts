@@ -1,6 +1,5 @@
 import { Capture, Restore, EndTurn } from 'stopify-continuations/dist/src/runtime/runtime';
 import { Result, Runtime } from 'stopify-continuations';
-import { ElapsedTimeEstimator } from 'stopify-estimators';
 import { Serializer } from '../utils/serializer';
 
 /**
@@ -48,8 +47,6 @@ export class CheckpointRuntime extends Serializer {
   public onDone: (result: Result) => void;
   public onEnd: (result: any) => void;
 
-  private estimator: ElapsedTimeEstimator;
-
   constructor(public rts: Runtime) {
     super();
     function defaultDone(x: Result) {
@@ -72,10 +69,6 @@ export class CheckpointRuntime extends Serializer {
         return result.value;
       }
     };
-  }
-
-  setEstimator(estimator: ElapsedTimeEstimator): void {
-    this.estimator = estimator;
   }
 
   /**
