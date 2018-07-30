@@ -1,6 +1,7 @@
 import * as babel from 'babel-core';
-import { CompilerOpts } from 'stopify-continuations';
-import { plugin as distribufy } from '../transform/distribufy';
+import { CompilerOpts, getSourceMap } from 'stopify-continuations';
+import { checkAndFillCompilerOpts } from 'stopify-continuations/dist/src/compiler/check-compiler-opts';
+import { plugin } from '../transform/distribufy';
 import { default as pickle } from '../serialization/transform/scope';
 
 /**
@@ -13,7 +14,7 @@ import { default as pickle } from '../serialization/transform/scope';
  */
 export function compile(src: string, opts: CompilerOpts): string {
   const babelOpts = {
-    plugins: [[ distribufy, opts ]],
+    plugins: [[ plugin, opts ]],
     babelrc: false,
     ast: false,
     code: true,
@@ -24,4 +25,10 @@ export function compile(src: string, opts: CompilerOpts): string {
   babelOpts.plugins = [[pickle]];
   const { code: checkpointed } = babel.transform(code!, babelOpts);
   return checkpointed!;
+}
+
+
+export function distribufy(src: string,
+  opts: Partial<CompilerOpts>): string {
+  return compile(src, checkAndFillCompilerOpts(opts, getSourceMap(src)));
 }

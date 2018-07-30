@@ -1,6 +1,6 @@
 import 'source-map-support/register';
 import * as fs from 'fs';
-import { distribufy } from './index';
+import { distribufy } from './compiler/compiler';
 import * as parseCli from 'stopify-continuations/dist/src/compiler/parse-compiler-opts';
 
 function main() {

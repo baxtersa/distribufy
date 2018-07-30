@@ -18,7 +18,8 @@ This program uses our HTTP module to make a request and checkpoint the cloud
 function, then restore execution from the checkpoint before completing.
 
 ```js
-const http = require('./src/utils/http');
+const runtime = require('./src/index');
+const http = require('./src/utils/http').register(runtime);
 
 function main() {
   const options = {
