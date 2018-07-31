@@ -33,7 +33,10 @@ const mod = require('<module-path>').register(runtime); // Register an extension
 HTTP requests are the canonical example of asynchronous I/O. We develop a
 [HTTP module](./src/utils/http.ts) to demonstrate how to use Distribufy's
 `checkpoint` function to build suspendable compositions with external
-services.
+services. The HTTP module takes an additional `serviceUrl` parameter for its
+`register` function. This URL should be the address of an external service
+which will make the actual HTTP request, and resume the original action from
+the checkpoint where the request was made.
 
 ## Examples
 
@@ -42,7 +45,7 @@ function, then restore execution from the checkpoint before completing.
 
 ```js
 const runtime = require('./src/index');
-const http = require('./src/utils/http').register(runtime);
+const http = require('./src/utils/http').register(runtime, '<http-service-url>');
 
 function main() {
   const options = {

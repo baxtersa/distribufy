@@ -2,6 +2,8 @@ import { Capture, Restore, EndTurn } from 'stopify-continuations/dist/src/runtim
 import { Result, Runtime } from 'stopify-continuations';
 import { Serializer } from '../utils/serializer';
 
+const needle = require('needle');
+
 /**
  * Wrapped value returned from checkpoint handlers.
  */
@@ -37,7 +39,21 @@ export interface ReifiedPromise<T> {
   resolvesTo?: Promise<any>;
 };
 
-/**
+function service(body: any, url: string): Promise<any> {
+  console.log('service-req: ' + JSON.stringify(body));
+  return needle('post', url + '/v1/jobs', body, { json: true })
+    .then((response: any) =>
+      response.statusCode >= 400 ? Promise.reject(response) : response);
+}
+
+function callback() {
+  console.log(process.env.__OW_ACTION_NAME, process.env.__OW_API_HOST, process.env.__OW_API_KEY);
+  const slash = process.env.__OW_ACTION_NAME!.substring(1).indexOf('/') + 1
+  const uri = process.env.__OW_API_HOST + '/api/v1/namespaces' + process.env.__OW_ACTION_NAME!.substring(0, slash) + '/actions' + process.env.__OW_ACTION_NAME!.substring(slash)
+  return { type: 'http', uri: encodeURI(uri), auth: process.env.__OW_API_KEY }
+}
+
+/**kO
  * Frontend to continuations implementing serializable checkpoints.
  */
 export class CheckpointRuntime extends Serializer {
@@ -91,6 +107,27 @@ export class CheckpointRuntime extends Serializer {
             return new Checkpoint(result);
           }
         }, onDone)));
+  }
+
+  exec({ action, args, serviceUrl }: { action: string, args: any, serviceUrl: string }): Promise<any> {
+    return this.checkpoint(k => {
+      const req = {
+        action: action,
+        callback: callback(),
+        params: args,
+        payload: {},
+        state: {
+          '$continuation': k,
+        }
+      };
+
+      return service(req, serviceUrl)
+        .then((response: any) => ({ params: { method: 'exec', serviceId: response.body.id } }),
+          (error: any) => {
+            console.error(error); // exec failed
+            return { params: { message: 'Internal Error' } };
+          });
+    });
   }
 
   invoke(action: string, params: any): any {

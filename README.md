@@ -27,7 +27,7 @@ Distribufy.
 ```bash
 $ git clone https://github.com/baxtersa/distribufy.git
 $ cd <distribufy-root>
-$ yarn build
+$ yarn install && yarn build
 ```
 
 **Note:** The repositories must be cloned next to eachother in the filesystem.
@@ -66,7 +66,7 @@ invoke checkpointing functions.
 First, compile the source program into `<distribufy-root>/dist/`.
 ```bash
 $ cd <distribufy-root>
-$ bin/distribufy <src> dist/<dst> --func -t catch
+$ bin/distribufy <src> dist/tmp.js --func -t catch
 ```
 
 Next, create the `.zip` archive to be deployed.
@@ -83,11 +83,10 @@ conductor true`.
 $ wsk action create <action> <action>.zip --kind nodejs:8 --annotation conductor true
 ```
 
-Finally, the action can be invoked normally. The program takes an additional
-input parameter `$filename`, which should be set to the filename of the
-compiled program.
+Finally, the action can be invoked normally, optionally passing parameters to
+the function.
 ```bash
-$ wsk action invoke <action> -p '$filename' <dst> --result
+$ wsk action invoke <action> ...[-p key value] --result
 ```
 
 ### `bin/run-dist`

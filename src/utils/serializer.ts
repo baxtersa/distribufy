@@ -35,7 +35,7 @@ export class Serializer {
     const o = {
       continuation,
       persist: this.persistent_map,
-      promises: this.promises,
+//      promises: this.promises,
     };
     const continuationBuffer = this.pickle.serialize(o);
     fs.writeFileSync('continuation.data', continuationBuffer);
@@ -43,8 +43,9 @@ export class Serializer {
   }
 
   deserialize(buffer: Buffer): Stack {
-      const { continuation, persist } = this.depickle.deserialize(buffer);
-      this.persistent_map = persist;
-      return continuation as Stack;
+    console.log(new Error(`Shouldn't be deserializing`));
+    const { continuation, persist } = this.depickle.deserialize(buffer);
+    this.persistent_map = persist;
+    return continuation as Stack;
   }
 }

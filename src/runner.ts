@@ -3,7 +3,7 @@ import { CheckpointRuntime } from './runtime/checkpointable';
 import { polyfillPromises, unpolyfillPromises } from './promises';
 
 export interface RuntimeOptions {
-  filename: string;
+  filename?: string;
   continuation?: string | Buffer;
   parameter?: any;
 }
@@ -19,8 +19,8 @@ export function relativize(p: string): string {
   return path.join(process.cwd(), `/${p}`);
 }
 
-function runFromContinuation(args: RuntimeOptions): any {
-  const buf = new Buffer(args.continuation as string, 'base64');
+function runFromContinuation(filename: string, continuation: string, args: RuntimeOptions): any {
+  const buf = new Buffer(continuation, 'base64');
 
   return $__R.runtime(() => {
     if (!$__D) {
@@ -29,7 +29,7 @@ function runFromContinuation(args: RuntimeOptions): any {
       polyfillPromises($__D);
     }
 
-    $__D.resume(buf, () => require(args.filename));
+    $__D.resume(buf, () => require(filename));
 
     throw new $__T.Capture((k) => {
       try {
@@ -44,21 +44,32 @@ function runFromContinuation(args: RuntimeOptions): any {
   }, result => $__D.onEnd(result));
 }
 
-function runFromStart(args: RuntimeOptions): any {
+function runFromStart(filename: string, args: RuntimeOptions): any {
   if (!$__D) {
     $__D = runtime.init($__R);
     (<any>global).$__D = $__D;
     polyfillPromises($__D);
   }
 
-  return require(args.filename).call(global);
+  for (const mod in require.cache) {
+    delete require.cache[mod];
+  }
+  return require(filename).call(global, args.parameter || {});
 }
 
 export function run(args: RuntimeOptions): any {
-  if (args.continuation) {
-    return runFromContinuation(args);
+  const filename = args.filename || '../tmp.js';
+  delete args.filename;
+
+  const continuation = args.continuation;
+  delete args.continuation;
+
+  console.log(continuation);
+
+  if (continuation) {
+    return runFromContinuation(filename, continuation as string, args);
   } else {
-    return $__R.runtime(() => runFromStart(args),
+    return $__R.runtime(() => runFromStart(filename, args),
       result => {
         const final = $__D.onEnd(result);
         unpolyfillPromises();
