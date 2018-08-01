@@ -43,7 +43,6 @@ export class Serializer {
   }
 
   deserialize(buffer: Buffer): Stack {
-    console.log(new Error(`Shouldn't be deserializing`));
     const { continuation, persist } = this.depickle.deserialize(buffer);
     this.persistent_map = persist;
     return continuation as Stack;

@@ -64,16 +64,23 @@ export function run(args: RuntimeOptions): any {
   const continuation = args.continuation;
   delete args.continuation;
 
-  console.log(continuation);
-
   if (continuation) {
     return runFromContinuation(filename, continuation as string, args);
   } else {
     return $__R.runtime(() => runFromStart(filename, args),
       result => {
         const final = $__D.onEnd(result);
-        unpolyfillPromises();
+        //unpolyfillPromises();
         return final;
       });
   }
+}
+
+export function join(args: any): any {
+  if (!$__D) {
+    $__D = runtime.init($__R);
+    (<any>global).$__D = $__D;
+  }
+
+  return $__D.join(args);
 }

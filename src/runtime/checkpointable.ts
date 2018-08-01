@@ -47,7 +47,6 @@ function service(body: any, url: string): Promise<any> {
 }
 
 function callback() {
-  console.log(process.env.__OW_ACTION_NAME, process.env.__OW_API_HOST, process.env.__OW_API_KEY);
   const slash = process.env.__OW_ACTION_NAME!.substring(1).indexOf('/') + 1
   const uri = process.env.__OW_API_HOST + '/api/v1/namespaces' + process.env.__OW_ACTION_NAME!.substring(0, slash) + '/actions' + process.env.__OW_ACTION_NAME!.substring(slash)
   return { type: 'http', uri: encodeURI(uri), auth: process.env.__OW_API_KEY }
@@ -109,7 +108,27 @@ export class CheckpointRuntime extends Serializer {
         }, onDone)));
   }
 
-  exec({ action, args, serviceUrl }: { action: string, args: any, serviceUrl: string }): Promise<any> {
+  fork(count: number, serviceUrl: string, continuation: string): Promise<any> {
+    console.log('fork checkpoint');
+    const req = {
+      action: 'fork',
+      params: { count },
+      callback: callback(),
+      state: {
+        $continuation: continuation,
+      },
+    };
+
+    console.log('fork-req: ', JSON.stringify(req));
+
+    return service(req, serviceUrl);
+  }
+
+  exec({
+    action,
+    args,
+    serviceUrl,
+  }: { action: string, args: any, serviceUrl: string }): Promise<any> {
     return this.checkpoint(k => {
       const req = {
         action: action,
@@ -117,8 +136,8 @@ export class CheckpointRuntime extends Serializer {
         params: args,
         payload: {},
         state: {
-          '$continuation': k,
-        }
+          $continuation: k,
+        },
       };
 
       return service(req, serviceUrl)
@@ -130,9 +149,22 @@ export class CheckpointRuntime extends Serializer {
     });
   }
 
-  invoke(action: string, params: any): any {
-    return this.checkpoint($continuation =>
-      ({ action, params, state: { $continuation: $continuation } }));
+  join(args: any): Promise<any> {
+    const join = args.join;
+    const serviceUrl = args.serviceUrl;
+    delete args.join;
+    delete args.serviceUrl;
+
+    return service({
+      action: 'join',
+      params: join,
+      payload: args,
+    }, serviceUrl)
+      .then((response: any) => ({ params: { method: 'join', serviceId: response.body.id } }),
+        (error: any) => {
+          console.error(error);
+          return { params: { error: `Internal Error` } };
+        });
   }
 
   resume(buffer: Buffer, entrypoint: () => (() => any)): void {
