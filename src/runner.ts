@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { CheckpointRuntime } from './runtime/checkpointable';
-import { polyfillPromises, unpolyfillPromises } from './promises';
+//import { polyfillPromises, unpolyfillPromises } from './promises';
 
 export interface RuntimeOptions {
   filename?: string;
@@ -26,7 +26,7 @@ function runFromContinuation(filename: string, continuation: string, args: Runti
     if (!$__D) {
       $__D = runtime.init($__R);
       (<any>global).$__D = $__D;
-      polyfillPromises($__D);
+      //polyfillPromises($__D);
     }
 
     $__D.resume(buf, () => require(filename));
@@ -48,7 +48,7 @@ function runFromStart(filename: string, args: RuntimeOptions): any {
   if (!$__D) {
     $__D = runtime.init($__R);
     (<any>global).$__D = $__D;
-    polyfillPromises($__D);
+    //polyfillPromises($__D);
   }
 
   for (const mod in require.cache) {
