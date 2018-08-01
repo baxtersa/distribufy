@@ -5,7 +5,7 @@ import { CheckpointRuntime } from '../runtime/checkpointable';
  * checkpoints with the response body.
  */
 export function register(runtime: CheckpointRuntime, serviceUrl: string) {
-  function request(method: string, url: string, options: any) {
+  function request(method: string, url: string, data: any, options: any) {
     return runtime.exec({
       action: 'http',
       args: { method, url },
@@ -14,23 +14,23 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
   }
 
   // HTTP GET
-  function get(uri: string, options: any) {
-    return request('get', uri, options);
+  function get(uri: string, data: any,  options: any) {
+    return request('get', uri, data, options);
   }
 
   // HTTP PUT
-  function put(uri: string, options: any) {
-    return request('put', uri, options);
+  function put(uri: string, data: any, options: any) {
+    return request('put', uri, data, options);
   }
 
   // HTTP POST
-  function post(uri: string, options: any) {
-    return request('post', uri, options);
+  function post(uri: string, data: any, options: any) {
+    return request('post', uri, data, options);
   }
 
   // HTTP DELETE
-  function Delete(uri: string, options: any) {
-    return request('delete', uri, options);
+  function Delete(uri: string, data: any, options: any) {
+    return request('delete', uri, data, options);
   }
 
   return {
