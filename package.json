@@ -6,12 +6,15 @@
     "test": "./node_modules/.bin/jest"
   },
   "dependencies": {
+    "@types/swagger-schema-official": "^2.0.10",
     "babel-core": "^6.26.3",
     "babel-traverse": "^6.26.0",
     "babel-types": "^6.25.0",
     "needle": "^2.2.1",
+    "openwhisk": "^3.16.0",
     "stopify-continuations": "file:../stopify/stopify-continuations",
-    "stopify-estimators": "file:../stopify/stopify-estimators"
+    "stopify-estimators": "file:../stopify/stopify-estimators",
+    "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
     "@types/babel-core": "^6.25.4",
