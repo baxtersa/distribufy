@@ -17,6 +17,7 @@
     "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
+    "@cloudant/cloudant": "^2.3.0",
     "@types/babel-core": "^6.25.4",
     "@types/babel-traverse": "^6.25.3",
     "@types/babel-types": "^6.7.16",
