@@ -11,6 +11,7 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
 
   function map(action: string, values: any[]): Promise<any> {
     if (!Array.isArray(values) || values.length === 0) {
+      throw new Error(`reinvoking\naction was: ${action}\nvalues was: ${JSON.stringify(values)}`);
       return reinvoke(process.env.__OW_ACTION_NAME!, {});
     }
 
