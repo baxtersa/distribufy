@@ -8,7 +8,7 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
   function request(method: string, url: string, data: any, options: any) {
     return runtime.exec({
       action: 'http',
-      args: Object.assign({}, { method, url }, data),
+      args: Object.assign({}, { method, url }, data, options),
       serviceUrl,
     });
   }
