@@ -127,21 +127,23 @@ export class CheckpointRuntime extends Serializer {
   exec({
     action,
     args,
+    payload,
     serviceUrl,
-  }: { action: string, args: any, serviceUrl: string }): Promise<any> {
+  }: { action: string, args: any, payload?: any, serviceUrl: string }): Promise<any> {
     return this.checkpoint(k => {
       const req = {
         action: action,
         callback: callback(),
         params: args,
-        payload: {},
+        payload: payload || {},
         state: {
           $continuation: k,
         },
       };
 
       return service(req, serviceUrl)
-        .then((response: any) => ({ params: { method: 'exec', serviceId: response.body.id } }),
+        .then((response: any) =>
+          ({ params: { method: 'exec', serviceId: response.body.id } }),
           (error: any) => {
             console.error(error); // exec failed
             return { params: { message: 'Internal Error' } };
@@ -160,7 +162,8 @@ export class CheckpointRuntime extends Serializer {
       params: join,
       payload: args,
     }, serviceUrl)
-      .then((response: any) => ({ params: { method: 'join', serviceId: response.body.id } }),
+      .then((response: any) =>
+        ({ params: { method: 'join', serviceId: response.body.id } }),
         (error: any) => {
           console.error(error);
           return { params: { error: `Internal Error` } };

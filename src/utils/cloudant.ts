@@ -1,29 +1,46 @@
 import { CheckpointRuntime } from '../runtime/checkpointable';
-import * as utils from './utils';
 
-type Options = {
+export type Options = {
   host: string,
   auth: string,
   db: string,
+};
+
+type InternalOptions = Options & {
+  key: string,
+  value?: any,
 };
 
 /**
  * Register checkpointing functions which invoke Cloudant requests.
  */
 export function register(runtime: CheckpointRuntime, serviceUrl: string) {
-  const { action } = utils.register(runtime, serviceUrl);
-
-  function upsert(kv: { key: string, value: any }, options: Options) {
-    return action('cloudant', {
-      key: kv.key,
-      value: kv.value,
-      url: options.host,
-      password: options.auth,
-      db: options.db,
+  function request(method: string, options: InternalOptions) {
+    return runtime.exec({
+      action: 'http',
+      args: {
+        method,
+        url: `https://${options.host}/${options.db}/${options.key}`,
+        headers: {
+          'Authorization': `Basic ${options.auth}`,
+          'Content-Type': 'application/json',
+        },
+      },
+      payload: options.value || {},
+      serviceUrl,
     });
   }
 
+  function get(key: string, options: Options) {
+    return request('get', { ...options, key });
+  }
+
+  function insert(key: string, value: any, options: Options) {
+    return request('put', { ...options, key, value });
+  }
+
   return {
-    upsert,
+    get,
+    insert,
   }
 }
