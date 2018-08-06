@@ -25,6 +25,15 @@ const parser = yargs.usage('Usage: $0 <filename> [options]')
       'p': {
         alias: 'parameter',
         describe: 'Parameter with which to resume suspended program',
+        coerce: (opt => {
+          let param;
+          try {
+            param = JSON.parse(opt);
+          } catch (err) {
+            param = opt;
+          }
+          return param;
+        })
       }
     }))
     .help()
