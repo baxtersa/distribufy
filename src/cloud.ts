@@ -7,7 +7,7 @@ interface Params {
 };
 
 export function main(params: Params): any {
-  console.log(params);
+  console.log(JSON.stringify(params));
   if (params.$resume) {
     console.log('resuming');
     const conductor = Object.assign({}, params.$resume);
