@@ -85,9 +85,18 @@ module.exports = main;
 
 ### Flu Report Processing
 
-This program demonstrates a more fully featured application, using multiple extension modules.
+This program demonstrates a more fully featured application, using multiple
+extension modules. This applicaiton is composed of two deployed functions,
+`flureport.js` and `cloudant-upsert.js`, shown below.
 
-`flureport.js`
+`flureport.js` performs the following actions.
+ - Asynchronously fetches a `flureport.xml` file
+ - Asynchronously invokes a cloud function that transforms the `xml` data to
+ `json`.
+ - Iterates over the first 5 weeks of the report, parsing the data and
+ mapping the `cloudant-upsert.js` function in parallel over each state in the
+ week's report.
+ - Returns a message that the report has been processed.
 
 ```js
 const serviceUrl = '<external-service-url>';
@@ -117,7 +126,7 @@ function main(params) {
   const reportJson = utils.action('jsonify', flureport);
 
   // iterate over each time period
-  const slices = reportJson.flureport.timeperiod.slice(0, 1);
+  const slices = reportJson.flureport.timeperiod.slice(0, 5);
   for (let i = 0; i < slices.length; i++) {
     const report = slices[i];
     const parsed = parseReport(report);
@@ -133,6 +142,18 @@ function main(params) {
 
 module.exports = main;
 ```
+
+`cloudant-upsert.js` relies on the table `'twc-flu'` existing in a Cloudant
+database, which can be authenticated at the url `{{{CLOUDANT_HOST}}}`, which
+can be authenticated with `{{{CLOUDANT_AUTH}}}`. It performs the following
+actions.
+- It formats the input report.
+- Then invokes the `upsert` function, which makes two asynchronous requests.
+  - First, `upsert` makes a `get` request to Cloudant to query whether the
+  key already exists in the database.
+  - If the key exists, `upsert` mutates the `value` to be inserted with the `_id` and `_rev` of the existing document in Cloudant.
+  - Then, it makes a `put` request inserting the possibly mutated `value`
+  into Cloudant with the specified `key`.
 
 ```js
 const runtime = require('./src/index');
