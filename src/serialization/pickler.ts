@@ -1,3 +1,4 @@
+import { Serializer } from '../utils/serializer';
 import { native as nativeSym } from './symbol_map';
 const v8 = require('v8');
 
@@ -13,8 +14,10 @@ const promises = '$__promises';
 const symbols = '$__symbols';
 const globals = '$__globals';
 const cached = '$__cached';
+const serializer = '$__serializer';
 
 const cache = Symbol.for('cache');
+const required = Symbol.for('required');
 
 /**
  * `Pickler` wraps the v8 serialization API with methods for serializing
@@ -115,7 +118,11 @@ export class Pickler {
           const value = o[key];
           switch (typeof value) {
             case 'function':
-              if (value[cache]) {
+              if (value[required]) {
+                o[key] = { type: '$__required', value: value[required] };
+                continue;
+              } else if (value[cache]) {
+                console.log('caching function');
                 const cacheWrapper = { type: cached, value: value[cache] };
                 this.restructureFn('value', value[cache], cacheWrapper);
                 o[key] = cacheWrapper;
@@ -129,6 +136,19 @@ export class Pickler {
                 continue;
               } else if (value === global) {
                 o[key] = { type: globals };
+                continue;
+              } else if (value instanceof Serializer) {
+                o[key] = { type: serializer };
+                continue;
+              } else if (value !== null && value[cache]) {
+                console.log('caching object');
+                const cacheWrapper = { type: cached, value: value[cache] };
+                o[key] = cacheWrapper;
+                console.log(value[cache]);
+                this.restructureFn('value', value[cache], cacheWrapper);
+                continue;
+              } else if (value !== null && value[required]) {
+                o[key] = { type: '$__required', value: value[required] };
                 continue;
               }
               // Recursively restructure nested objects
@@ -195,6 +215,8 @@ export class Pickler {
  * scope before the function is reallocated from its string representation.
  */
 export class Depickler {
+  constructor(private runtime: Serializer) {}
+
   /** Map Function objects to ids to support sharing */
   private fn_map: Map<number, Function> = new Map();
   /** Map Promises to ids to support sharing */
@@ -250,6 +272,10 @@ export class Depickler {
                 o[key] = global;
               } else if (value && value.type === promises) {
                 o[key] = this.promise_map.get(value.value);
+              } else if (value && value.type === serializer) {
+                o[key] = this.runtime;
+              } else if (value && value.type === '$__required') {
+                o[key] = this.runtime.modules.get(value.value);
               } else {
                 this.dispatch(value);
               }

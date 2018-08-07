@@ -33,10 +33,11 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
     return request('delete', uri, data, options);
   }
 
-  return {
+  delete this.register;
+  return Object.assign(this, {
     get,
     delete: Delete,
     put,
     post,
-  };
+  });
 }

@@ -39,8 +39,9 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
     return request('put', { ...options, key, value });
   }
 
-  return {
+  delete this.register;
+  return Object.assign(this, {
     get,
     insert,
-  }
+  });
 }

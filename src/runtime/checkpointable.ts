@@ -171,13 +171,13 @@ export class CheckpointRuntime extends Serializer {
   }
 
   resume(buffer: Buffer, entrypoint: () => (() => any)): void {
-    const continuation = this.deserialize(buffer);
-    this.rts.stack = continuation;
-
     for (const mod in require.cache) {
       delete require.cache[mod];
     }
     const main = entrypoint();
+
+    const continuation = this.deserialize(buffer);
+    this.rts.stack = continuation;
 
     if (this.rts.stack[this.rts.stack.length - 1].f.name === main.name) {
       this.rts.stack[this.rts.stack.length - 1].f = main;

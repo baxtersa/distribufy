@@ -5,7 +5,7 @@ import { Pickler, Depickler } from '../serialization/pickler';
 
 export class Serializer {
   private pickle = new Pickler();
-  private depickle = new Depickler();
+  private depickle = new Depickler(this);
 
   /**
    * Maps identifiers to values to be persisted for initialization code re-run
@@ -14,6 +14,7 @@ export class Serializer {
   public persistent_map = new Map<string, any>();
   /** Maps `Promise` references to reified promise state for serialization. */
   public promises = new Map<Promise<any>, ReifiedPromise<any>>();
+  public modules = new Map<string, any>();
 
   /**
    * Utility function to persist non-deterministic initialization code that
@@ -29,6 +30,13 @@ export class Serializer {
       this.persistent_map.set(id, v);
     }
     return v;
+  }
+
+  require(path: string): any {
+    const reqd = require('../../' + path);
+    reqd[Symbol.for('required')] = path;
+    this.modules.set(path, reqd);
+    return reqd;
   }
 
   serialize(continuation: Stack): Buffer {
