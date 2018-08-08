@@ -78,11 +78,7 @@ export class CheckpointRuntime extends Serializer {
       this.eventMode = EventProcessingMode.Waiting;
       defaultDone(result);
       this.processQueuedEvents();
-      if (result.value instanceof Checkpoint) {
-        return result.value.value;
-      } else {
-        return result.value;
-      }
+      return result.value;
     };
   }
 
