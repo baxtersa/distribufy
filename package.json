@@ -1,21 +1,21 @@
 {
   "name": "distribufy",
+  "version": "0.0.1",
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
     "test": "./node_modules/.bin/jest"
   },
   "dependencies": {
-    "babel-core": "^6.26.3",
-    "babel-traverse": "^6.26.0",
-    "babel-types": "^6.25.0",
     "needle": "^2.2.1",
     "openwhisk": "^3.16.0",
     "stopify-continuations": "file:../stopify/stopify-continuations",
-    "stopify-estimators": "file:../stopify/stopify-estimators",
     "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-traverse": "^6.26.0",
+    "babel-types": "^6.25.0",
     "@cloudant/cloudant": "^2.3.0",
     "@types/babel-core": "^6.25.4",
     "@types/babel-traverse": "^6.25.3",
@@ -26,6 +26,7 @@
     "@types/tmp": "^0.0.33",
     "@types/yargs": "^11.0.0",
     "jest": "^23.1.0",
+    "stopify-continuations-compiler": "file:../stopify/stopify-continuations-compiler",
     "tmp": "^0.0.33",
     "typescript": "^2.9.2",
     "yargs": "^12.0.1"

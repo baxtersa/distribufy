@@ -826,10 +826,6 @@ delegates@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
 
-detect-browser@^1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/detect-browser/-/detect-browser-1.12.0.tgz#71b57d7809fc6e42050b28f89529123c1b3290f9"
-
 detect-indent@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-4.0.0.tgz#f76d064352cdf43a1cb6ce619c4ee3a9475de208"
@@ -3009,7 +3005,7 @@ stealthy-require@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/stealthy-require/-/stealthy-require-1.1.1.tgz#35b09875b4ff49f26a777e509b3090a3226bf24b"
 
-"stopify-continuations@file:../stopify/stopify-continuations":
+"stopify-continuations-compiler@file:../stopify/stopify-continuations-compiler":
   version "0.5.0"
   dependencies:
     babel-core "^6.26.3"
@@ -3023,10 +3019,8 @@ stealthy-require@^1.1.0:
     source-map-support "^0.5.6"
     trie "^0.2.1"
 
-"stopify-estimators@file:../stopify/stopify-estimators":
+"stopify-continuations@file:../stopify/stopify-continuations":
   version "0.5.0"
-  dependencies:
-    detect-browser "^1.12.0"
 
 string-length@^2.0.0:
   version "2.0.0"
