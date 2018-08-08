@@ -32,6 +32,23 @@ $ yarn install && yarn build
 
 **Note:** The repositories must be cloned next to eachother in the filesystem.
 
+**Optional:** The steps to clone and build `distribufy` result in large `zip`
+files for uploaded cloud function packages because development dependencies
+are also zipped up in `node_modules`. To reduce the size of the `zip`
+bundles, follow these instructions instead.
+```bash
+$ git clone https://github.com/baxtersa/distribufy.git
+$ cd <distribufy-root>
+$ yarn install --production
+$ # Prime a zip file with just the production dependencies
+$ zip -r <primed-action>.zip node_modules
+$ yarn install && yarn build
+$ zip -r <primed-action>.zip dist
+```
+
+Now `<primed-action>.zip` is primed with only production dependencies, resulting in a
+much smaller `zip` to upload.
+
 ## Usage
 
 Distribufy consists of a command-line compiler and command-line launcher.
@@ -75,6 +92,14 @@ $ # Define the entrypoint of the cloud function in `package.json`.
 $ mkdir tmp && echo '{ "main": "./dist/src/cloud.js" }' > tmp/package.json
 $ zip -r <action>.zip node_modules dist
 $ zip -j <action>.zip tmp/package.json
+```
+
+**Optional:** If the optional steps to produce a primed, smaller `zip` file were taken above, follow these steps to create the `zip` archive instead.
+```bash
+$ # Define the entrypoint of the cloud function in `package.json`.
+$ mkdir tmp && echo '{ "main": "./dist/src/cloud.js" }' > tmp/package.json
+$ zip <primed-action>.zip dist/tmp.js
+$ zip -j <primed-action>.zip tmp/package.json
 ```
 
 Now, deploy the function to openwhisk with the annotation `--annotation
@@ -147,18 +172,20 @@ APIs are not currently supported.
 
 ## Examples
 
-### Simple Checkpointing
+### Simple Sleeping Checkpointing
 
-This program prints a line before and after a checkpoint, demonstrating that
+This program prints a line before and after a 5s sleep, demonstrating that
 sequential code is properly checkpointed and not re-executed upon resumption.
 
 ```js
 const runtime = require('./src/index');
+const utils = runtime.require('./src/utils/utils')
+  .register(runtime, '<external-service-url>');
 
 function main() {
-  console.log('before checkpoint');
-  runtime.checkpoint();
-  console.log('after checkpoint');
+  console.log('before sleep');
+  utils.sleep(5000);
+  console.log('after sleep');
 }
 
 module.exports = main;
