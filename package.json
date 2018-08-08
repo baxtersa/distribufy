@@ -6,7 +6,6 @@
     "test": "./node_modules/.bin/jest"
   },
   "dependencies": {
-    "@types/swagger-schema-official": "^2.0.10",
     "babel-core": "^6.26.3",
     "babel-traverse": "^6.26.0",
     "babel-types": "^6.25.0",
@@ -22,7 +21,8 @@
     "@types/babel-traverse": "^6.25.3",
     "@types/babel-types": "^6.7.16",
     "@types/jest": "^23.1.0",
-    "@types/node": "^10.3.0",
+    "@types/node": "*",
+    "@types/swagger-schema-official": "^2.0.10",
     "@types/tmp": "^0.0.33",
     "@types/yargs": "^11.0.0",
     "jest": "^23.1.0",
