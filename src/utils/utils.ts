@@ -9,7 +9,16 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
       ({ action, params, state: { $continuation: $continuation } }));
   }
 
+  function sleep(ms: number) {
+    return runtime.exec({
+      action: 'sleep',
+      args: { ms },
+      serviceUrl,
+    });
+  }
+
   return {
     action,
+    sleep,
   };
 }
