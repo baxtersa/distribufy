@@ -1,4 +1,4 @@
-import { Capture, Restore, EndTurn } from 'stopify-continuations/dist/src/runtime/runtime';
+import { Capture, Restore, EndTurn } from 'stopify-continuations';
 import { Result, Runtime } from 'stopify-continuations';
 import { Serializer } from '../utils/serializer';
 

@@ -8,7 +8,7 @@ export interface RuntimeOptions {
   parameter?: any;
 }
 
-import * as $__T from 'stopify-continuations/dist/src/runtime/runtime';
+import * as $__T from 'stopify-continuations';
 const $__R = $__T.newRTS('catch');
 import * as runtime from './runtime/node';
 (<any>global).$__T = $__T;

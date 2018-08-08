@@ -1,5 +1,5 @@
 import { Checkpoint, CheckpointRuntime } from './runtime/checkpointable';
-import { Capture } from 'stopify-continuations/dist/src/runtime/runtime';
+import { Capture } from 'stopify-continuations';
 
 const originalResolve = Promise.resolve;
 const originalThen = Promise.prototype.then;

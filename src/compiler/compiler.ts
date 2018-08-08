@@ -1,6 +1,6 @@
 import * as babel from 'babel-core';
-import { CompilerOpts, getSourceMap } from 'stopify-continuations';
-import { checkAndFillCompilerOpts } from 'stopify-continuations/dist/src/compiler/check-compiler-opts';
+import { CompilerOpts, getSourceMap } from 'stopify-continuations-compiler';
+import { checkAndFillCompilerOpts } from 'stopify-continuations-compiler/dist/src/compiler/check-compiler-opts';
 import { plugin } from '../transform/distribufy';
 import { default as pickle } from '../serialization/transform/scope';
 

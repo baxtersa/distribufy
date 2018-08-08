@@ -5,7 +5,7 @@ import {
   transformFromAst,
   fastFreshId,
   flatness,
-} from 'stopify-continuations';
+} from 'stopify-continuations-compiler';
 
 function timeSlow<T>(label: string, thunk: () => T): T {
   const start = Date.now();
