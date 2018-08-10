@@ -3005,8 +3005,9 @@ stealthy-require@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/stealthy-require/-/stealthy-require-1.1.1.tgz#35b09875b4ff49f26a777e509b3090a3226bf24b"
 
-"stopify-continuations-compiler@file:../stopify/stopify-continuations-compiler":
+stopify-continuations-compiler@distribufy:
   version "0.5.0"
+  resolved "https://registry.yarnpkg.com/stopify-continuations-compiler/-/stopify-continuations-compiler-0.5.0.tgz#4ed42d050d1d17c87820f22d6ee8f8f04afc556a"
   dependencies:
     babel-core "^6.26.3"
     babel-plugin-transform-es2015-arrow-functions "^6.22.0"
@@ -3019,8 +3020,9 @@ stealthy-require@^1.1.0:
     source-map-support "^0.5.6"
     trie "^0.2.1"
 
-"stopify-continuations@file:../stopify/stopify-continuations":
-  version "0.5.0"
+stopify-continuations@distribufy:
+  version "0.5.0-distribufy"
+  resolved "https://registry.yarnpkg.com/stopify-continuations/-/stopify-continuations-0.5.0-distribufy.tgz#1367f0b5b674c186baf0f9277c40d32e1186f30a"
 
 string-length@^2.0.0:
   version "2.0.0"

@@ -9,7 +9,7 @@
   "dependencies": {
     "needle": "^2.2.1",
     "openwhisk": "^3.16.0",
-    "stopify-continuations": "file:../stopify/stopify-continuations",
+    "stopify-continuations": "distribufy",
     "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
@@ -26,7 +26,7 @@
     "@types/tmp": "^0.0.33",
     "@types/yargs": "^11.0.0",
     "jest": "^23.1.0",
-    "stopify-continuations-compiler": "file:../stopify/stopify-continuations-compiler",
+    "stopify-continuations-compiler": "distribufy",
     "tmp": "^0.0.33",
     "typescript": "^2.9.2",
     "yargs": "^12.0.1"
