@@ -33,7 +33,7 @@ export class Serializer {
   }
 
   require(path: string): any {
-    const reqd = require('../../' + path);
+    const reqd = require(path);
     reqd[Symbol.for('required')] = path;
     this.modules.set(path, reqd);
     return reqd;
