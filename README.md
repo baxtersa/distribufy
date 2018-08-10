@@ -10,56 +10,30 @@ Distribufy exposes a `checkpoint` function to JavaScript programs, which
 captures and serializes a program's continuation. Checkpoints provide the
 basis for more complex compositions of I/O driven programs.
 
-## Building
+## Developing
 
-Distribufy builds against a branch of Stopify which must be built from
-source. The following steps should get your environment up and running.
-
-- First, clone and build Stopify locally.
-```bash
-$ git clone https://github.com/plasma-umass/Stopify.git --branch distribufy stopify
-$ cd stopify
-$ yarn install && yarn build
-```
-
-- Now clone Distribufy alongside the local Stopify repository and build
-Distribufy.
+Clone and build Distribufy locally if you are planning on developing
+Distribufy itself.
 ```bash
 $ git clone https://github.com/baxtersa/distribufy.git
 $ cd <distribufy-root>
 $ yarn install && yarn build
 ```
-
-**Note:** The repositories must be cloned next to eachother in the filesystem.
-
-**Optional:** The steps to clone and build `distribufy` result in large `zip`
-files for uploaded cloud function packages because development dependencies
-are also zipped up in `node_modules`. To reduce the size of the `zip`
-bundles, follow these instructions instead.
-```bash
-$ git clone https://github.com/baxtersa/distribufy.git
-$ cd <distribufy-root>
-$ yarn install --production
-$ # Prime a zip file with just the production dependencies
-$ zip -r <primed-action>.zip node_modules
-$ yarn install && yarn build
-$ zip -r <primed-action>.zip dist
-```
-
-Now `<primed-action>.zip` is primed with only production dependencies, resulting in a
-much smaller `zip` to upload.
 
 ## Usage
 
-Distribufy consists of a command-line compiler and command-line launcher.
+Distribufy consists of a command-line compiler and runtime framework for
+checkpointing cloud functions.
 
-### `bin/distribufy`
+Recommended usage is to install the compiler globally, and install the `distribufy` package as a dependency in your project's `package.json`.
 
-The `bin/distribufy` command compiles programs and instruments them to
+### Compiler: `distribufy`
+
+The `distribufy` command compiles programs and instruments them to
 support capturing continuations. The default invocation from the command line
 is:
 ```bash
-$ bin/distribufy <src> <dst> --func -t catch
+$ distribufy <src> <dst> --func -t catch
 ```
 
 These command line flags require brief explanation.
@@ -73,33 +47,52 @@ These command line flags require brief explanation.
  capture continuations. This strategy has shown the best performance on some
  benchmarks.
 
-### Cloud Deployment
+### Deployment
 
-Compiled programs can be deployed and run on OpenWhisk. This currently
-requires building cloud functions in-tree and structuring the deployed `.zip`
-action a certain way. The following commands show how to compile, deploy, and
-invoke checkpointing functions.
+Compiled programs can be deployed and run on OpenWhisk. This requires
+deploying a `zip` action structured in a certain way. The following commands
+show how to set up a local dev environment, and compile, deploy, and invoke
+checkpointing functions.
 
-First, compile the source program into `<distribufy-root>/dist/`.
+#### Initializing a cloud function project
+
+First, install the `distribufy@compiler` package globally, and initialize a
+local npm project.
 ```bash
-$ cd <distribufy-root>
-$ bin/distribufy <src> dist/tmp.js --func -t catch
+$ # Install the `distribufy` compiler globally
+$ npm install -g distribufy@compiler
+$ mkdir <project-root> && cd <project-root>
+$ npm init -y
+```
+
+Install the `distribufy` package as a dependency in the new project's
+`package.json`.
+```bash
+$ yarn add distribufy
+```
+
+Modify the `main` entrypoint of `package.json`.
+```js
+{
+  ...
+  "main": "node_modules/distribufy/dist/src/cloud.js",
+  ...
+}
+```
+
+#### Compiling and deploying a checkpointing cloud function
+
+Once the cloud function project has been properly initialized, we can
+develop, compile, and deploy our checkpointing cloud function.
+
+First, compile the source program into `node_modules/distribufy/dist/tmp.js`.
+```bash
+$ distribufy <src> node_modules/distribufy/dist/tmp.js --func -t catch
 ```
 
 Next, create the `.zip` archive to be deployed.
 ```bash
-$ # Define the entrypoint of the cloud function in `package.json`.
-$ mkdir tmp && echo '{ "main": "./dist/src/cloud.js" }' > tmp/package.json
-$ zip -r <action>.zip node_modules dist
-$ zip -j <action>.zip tmp/package.json
-```
-
-**Optional:** If the optional steps to produce a primed, smaller `zip` file were taken above, follow these steps to create the `zip` archive instead.
-```bash
-$ # Define the entrypoint of the cloud function in `package.json`.
-$ mkdir tmp && echo '{ "main": "./dist/src/cloud.js" }' > tmp/package.json
-$ zip <primed-action>.zip dist/tmp.js
-$ zip -j <primed-action>.zip tmp/package.json
+$ zip -r <action>.zip node_modules package.json
 ```
 
 Now, deploy the function to openwhisk with the annotation `--annotation
@@ -112,45 +105,6 @@ Finally, the action can be invoked normally, optionally passing parameters to
 the function.
 ```bash
 $ wsk action invoke <action> ...[-p key value] --result
-```
-
-### `bin/run-dist`
-
-The `bin/run-dist` command wraps compiled programs so that they can be run
-from the command line under three different modes: 1) from the start, 2) from
-a serialized checkpoint, and 3) end-to-end (1 & 2 run programs only to the
-next checkpoint).
-
-#### Running from the start
-
-The following command runs a program from the start of its entrypoint.
-
-```bash
-$ bin/run-dist <program>
-```
-
-If the program reaches a checkpoint, a continuation will be serialized to the
-file `continuation.data` on disk.
-
-#### Running from a serialized checkpoint
-
-The following command restores a serialized checkpoint, and resumes a
-program's execution from that position.
-
-```bash
-$ bin/run-dist <program> --continuation <continuation-file>
-```
-
-Again, if the program reaches a checkpoint, a continuation will be serialized
-to the file `continuation.data` on disk.
-
-#### Running end-to-end
-
-If you want to run a program end-to-end, resuming each checkpoint
-automatically, you can run the following command.
-
-```bash
-$ bin/run-dist <program> --loop
 ```
 
 ## Assumptions
@@ -178,8 +132,8 @@ This program prints a line before and after a 5s sleep, demonstrating that
 sequential code is properly checkpointed and not re-executed upon resumption.
 
 ```js
-const runtime = require('./src/index');
-const utils = runtime.require('./src/utils/utils')
+const runtime = require('distribufy');
+const utils = runtime.require('distribufy/dist/src/utils/utils')
   .register(runtime, '<external-service-url>');
 
 function main() {
@@ -198,7 +152,7 @@ across checkpoints. Without calling `persist`, each log would print a
 unique timestamp.
 
 ```js
-const runtime = require('./src/index');
+const runtime = require('distribufy');
 
 let timestamp = runtime.persist('i', () => Date.now());
 
@@ -222,7 +176,7 @@ This program demonstrates support for checkpointing within nested closures
 which mutate captured state. The top-level `require('assert')` is also closed over by the function `main`.
 
 ```js
-const runtime = require('./src/index');
+const runtime = require('distribufy');
 const assert = require('assert');
 
 function main() {
@@ -284,7 +238,9 @@ function main(params) {
 returns a combination of the restored local state and HTTP response.
 
 ```js
-const runtime = require('./src/index');
+const runtime = require('distribufy');
+const utils = runtime.require('distribufy/dist/src/utils/utils')
+  .register(runtime, '<external-service-url>');
 
 function main() {
   const options = {
@@ -302,7 +258,7 @@ function main() {
  *   timestamp: number,
  * }
  */
-  const response = runtime.invoke('http', options);
+  const response = utils.invoke('http', options);
 
   return {
     input: options,
