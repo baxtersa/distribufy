@@ -2,7 +2,7 @@ import * as babel from 'babel-core';
 import { CompilerOpts, getSourceMap } from 'stopify-continuations-compiler';
 import { checkAndFillCompilerOpts } from 'stopify-continuations-compiler/dist/src/compiler/check-compiler-opts';
 import { plugin } from '../transform/distribufy';
-import { default as pickle } from '../serialization/transform/scope';
+import { default as pickle } from '../transform/scope';
 
 /**
  * Compiles (i.e., "distribufies") a program. This function should not be used
