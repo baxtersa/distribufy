@@ -17,15 +17,19 @@ Distribufy itself.
 ```bash
 $ git clone https://github.com/baxtersa/distribufy.git
 $ cd <distribufy-root>
-$ yarn install && yarn build
+$ yarn install
 ```
+
+The `distribufy` and `distribufy-compiler` workspaces contain the Distribufy
+runtime and compiler code respectively.
 
 ## Usage
 
 Distribufy consists of a command-line compiler and runtime framework for
 checkpointing cloud functions.
 
-Recommended usage is to install the compiler globally, and install the `distribufy` package as a dependency in your project's `package.json`.
+Recommended usage is to install the compiler globally, and install the
+`distribufy` package as a dependency in your project's `package.json`.
 
 ### Compiler: `distribufy`
 
@@ -59,16 +63,16 @@ checkpointing functions.
 First, install the `distribufy@compiler` package globally, and initialize a
 local npm project.
 ```bash
-$ # Install the `distribufy` compiler globally
-$ npm install -g distribufy@compiler
+$ # Install the `distribufy-compiler` package globally
+$ npm install -g distribufy-compiler
 $ mkdir <project-root> && cd <project-root>
 $ npm init -y
 ```
 
-Install the `distribufy` package as a dependency in the new project's
-`package.json`.
+From the root of the new project, install the `distribufy` package as a
+dependency in `package.json`.
 ```bash
-$ yarn add distribufy
+$ npm install distribufy
 ```
 
 Modify the `main` entrypoint of `package.json`.
@@ -109,7 +113,8 @@ $ wsk action invoke <action> ...[-p key value] --result
 
 ## Assumptions
 
-There are some limitations on the types of programs currently supported by Distribufy. These are listed and discussed briefly.
+There are some limitations on the types of programs currently supported by
+Distribufy. These are listed and discussed briefly.
 
 - Files should have a single function entrypoint declared with
 `module.exports = <function>`.
@@ -173,7 +178,8 @@ module.exports = main;
 ### Closures and Free Variables
 
 This program demonstrates support for checkpointing within nested closures
-which mutate captured state. The top-level `require('assert')` is also closed over by the function `main`.
+which mutate captured state. The top-level `require('assert')` is also closed
+over by the function `main`.
 
 ```js
 const runtime = require('distribufy');
