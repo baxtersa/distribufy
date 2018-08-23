@@ -13,10 +13,7 @@
         "declaration": true,
         "inlineSourceMap": true,
         "noUnusedLocals": true,
-        "baseUrl": "./",
-        "paths": {
-          "@types/babel-traverse": ["/home/samuel/stopify/node_modules/@types/babel-traverse/index"]
-        }
+        "baseUrl": "./"
     },
     "include": [
       "src",

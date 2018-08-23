@@ -1,0 +1,42 @@
+{
+  "name": "distribufy",
+  "version": "0.0.3",
+  "main": "dist/src/index.js",
+  "bin": {
+    "distribufy": "bin/distribufy"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "./node_modules/.bin/jest"
+  },
+  "dependencies": {
+    "needle": "^2.2.1",
+    "openwhisk": "^3.16.0",
+    "source-map-support": "^0.5.8",
+    "stopify-continuations": "0.5.0-distribufy",
+    "swagger-schema-official": "^2.0.0-bab6bed"
+  },
+  "devDependencies": {
+    "@cloudant/cloudant": "^2.3.0",
+    "@types/babel-core": "^6.25.4",
+    "@types/babel-traverse": "^6.25.3",
+    "@types/babel-types": "^6.7.16",
+    "@types/jest": "^23.1.0",
+    "@types/node": "*",
+    "@types/swagger-schema-official": "^2.0.10",
+    "@types/tmp": "^0.0.33",
+    "@types/yargs": "^11.0.0",
+    "babel-core": "^6.26.3",
+    "babel-traverse": "^6.26.0",
+    "babel-types": "^6.25.0",
+    "jest": "^23.1.0",
+    "stopify-continuations-compiler": "0.5.0",
+    "tmp": "^0.0.33",
+    "typescript": "^2.9.2",
+    "yargs": "^12.0.1"
+  },
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/"
+  }
+}
