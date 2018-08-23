@@ -1,8 +1,0 @@
-node_modules
-src
-test
-cloud-functions
-.vscode
-*.code-workspace
-*.zip
-tsconfig.json

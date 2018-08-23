@@ -6,8 +6,7 @@
     "distribufy": "bin/distribufy"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "./node_modules/.bin/jest"
+    "build": "tsc"
   },
   "dependencies": {
     "babel-core": "^6.26.3",
@@ -23,9 +22,5 @@
     "@types/babel-types": "^6.7.16",
     "@types/node": "*",
     "typescript": "^2.9.2"
-  },
-  "jest": {
-    "verbose": true,
-    "testURL": "http://localhost/"
   }
 }
