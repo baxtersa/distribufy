@@ -1,6 +1,6 @@
 {
   "name": "distribufy",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
@@ -10,6 +10,7 @@
     "needle": "^2.2.1",
     "openwhisk": "^3.16.0",
     "source-map-support": "^0.5.8",
+    "stopify-continuations": "0.5.0-distribufy",
     "swagger-schema-official": "^2.0.0-bab6bed"
   },
   "devDependencies": {
