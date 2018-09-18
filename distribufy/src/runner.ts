@@ -33,7 +33,7 @@ function runFromContinuation(filename: string, continuation: string, args: Runti
 
     throw new $__T.Capture((k) => {
       try {
-        return k(args.parameter)
+        return k({ type: 'normal', value: args.parameter })
       } catch (e) {
         if (e instanceof $__T.Restore) {
           e.stack[0].this = $__D;
