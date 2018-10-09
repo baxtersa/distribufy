@@ -2,12 +2,13 @@ import { CheckpointRuntime } from '../runtime/checkpointable';
 import * as openwhisk from 'openwhisk';
 import { register as registerAction } from './utils';
 
+const wsk = openwhisk({ ignore_certs: true });
+
 /**
  * Register checkpointing functions which invoke parallel actions.
  */
 export function register(runtime: CheckpointRuntime, serviceUrl: string) {
   const { action: reinvoke } = registerAction(runtime, serviceUrl);
-  let wsk: openwhisk.Client;
 
   function map(action: string, values: any[]): Promise<any> {
     if (!Array.isArray(values) || values.length === 0) {
@@ -16,9 +17,6 @@ export function register(runtime: CheckpointRuntime, serviceUrl: string) {
     }
 
     return runtime.checkpoint(k => {
-      if (!wsk) {
-        wsk = openwhisk({ ignore_certs: true });
-      }
 
       console.log('forking', values.length);
       return runtime.fork(values.length, serviceUrl, k)
