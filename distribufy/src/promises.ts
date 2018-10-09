@@ -1,4 +1,4 @@
-import { Checkpoint, CheckpointRuntime } from './runtime/checkpointable';
+import { CheckpointRuntime } from './runtime/checkpointable';
 import { Capture } from 'stopify-continuations';
 
 const originalResolve = Promise.resolve;
@@ -45,16 +45,16 @@ export function polyfillPromises(rts: CheckpointRuntime): void {
       const wrapFulfill = (v: any) => {
         // A Promise chain has already been suspended. Early-exit chained
         // callbacks.
-        if (v instanceof Checkpoint) {
-          return v;
-        }
+        // if (v instanceof Checkpoint) {
+        //   return v;
+        // }
 
         // Wrap `onFulfilled` callback in runtime trampoline to handle
         // suspending inside Promise callbacks.
         return rts.rts.runtime(() => onFulfilled(v), (result) => {
-          if (result.value instanceof Checkpoint) {
-            return result.value;
-          }
+          // if (result.value instanceof Checkpoint) {
+          //   return result.value;
+          // }
 
           // Release resolved handler
           reifiedPromise.handlers.unshift();
@@ -71,11 +71,12 @@ export function polyfillPromises(rts: CheckpointRuntime): void {
           // exception.
           return rts.rts.runtime(() => { throw e; },
             (v) => {
-              if (v.type === 'normal' && v.value instanceof Checkpoint) {
-                // If we are serializing, just propogate the special return
-                // value.
-                return v.value;
-              } else if (v.type === 'normal') {
+              // if (v.type === 'normal' && v.value instanceof Checkpoint) {
+              //   // If we are serializing, just propogate the special return
+              //   // value.
+              //   return v.value;
+              // } else
+               if (v.type === 'normal') {
                 // If the resumption completes successfully, fulfill the
                 // promise.
                 const r = wrapFulfill(v.value);

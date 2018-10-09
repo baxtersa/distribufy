@@ -4,13 +4,6 @@ import { Serializer } from '../utils/serializer';
 
 const needle = require('needle');
 
-/**
- * Wrapped value returned from checkpoint handlers.
- */
-export class Checkpoint {
-  constructor(public value: any) {}
-}
-
 // Event Support
 
 enum EventProcessingMode {
@@ -65,9 +58,7 @@ export class CheckpointRuntime extends Serializer {
   constructor(public rts: Runtime) {
     super();
     function defaultDone(x: Result) {
-      if (x.type === 'normal' && x.value instanceof Checkpoint) {
-        return;
-      } else if (x.type === 'exception') {
+      if (x.type === 'exception') {
         throw x.value;
       }
     }
@@ -98,8 +89,7 @@ export class CheckpointRuntime extends Serializer {
             exn.stack.shift();
             const buffer = this.serialize(exn.stack);
 
-            const result = fn(buffer.toString('base64'));
-            return new Checkpoint(result);
+            return fn(buffer.toString('base64'));
           }
         }, onDone)));
   }
